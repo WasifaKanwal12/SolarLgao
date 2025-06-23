@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
 export default function RequestQuotePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
