@@ -1,7 +1,6 @@
-// src/app/customer/review/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react"; // Import Suspense
 import { useSearchParams, useRouter } from "next/navigation";
 import { auth } from "@/lib/config";
 import { onAuthStateChanged } from "firebase/auth";
@@ -10,9 +9,18 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
-export default function LeaveReviewPage() {
+
+const customerNavItems = [
+  { name: "Home", href: "/customer" },
+  { name: "My Quotes", href: "/customer/quotes" },
+  { name: "My Orders", href: "/customer/orders" },
+  { name: "Request Quote", href: "/customer/request-quote" },
+];
+
+// New component to encapsulate logic that uses useSearchParams
+function LeaveReviewContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // This hook is now safely within a Suspense-wrapped component
   const orderId = searchParams.get('orderId');
   const providerId = searchParams.get('providerId');
 
@@ -23,13 +31,6 @@ export default function LeaveReviewPage() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const customerNavItems = [
-    { name: "Home", href: "/customer" },
-    { name: "My Quotes", href: "/customer/quotes" },
-    { name: "My Orders", href: "/customer/orders" },
-    { name: "Request Quote", href: "/customer/request-quote" },
-  ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -63,7 +64,7 @@ export default function LeaveReviewPage() {
     });
 
     return () => unsubscribe();
-  }, [router, orderId, providerId]);
+  }, [router, orderId, providerId]); // Added orderId, providerId as dependencies
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -109,6 +110,94 @@ export default function LeaveReviewPage() {
 
   if (loading) {
     return (
+      <div className="flex justify-center items-center h-full">
+        <div className="loader"></div>
+      </div>
+    );
+  }
+
+  if (error && !isSubmitting) {
+    return (
+      <div className="p-8 text-center text-red-600">
+        <p>{error}</p>
+        <Link href="/customer/orders" className="btn-primary mt-4">Back to Orders</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto max-w-2xl bg-white p-8 rounded-lg shadow-md">
+      <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Leave a Review</h1>
+      <p className="text-center text-gray-600 mb-6">
+        Share your experience with <span className="font-bold">{providerName}</span> for your recent order.
+      </p>
+
+      {error && <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-md">{error}</div>}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Your Rating</label>
+          <div className="flex justify-center space-x-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <svg
+                key={star}
+                onClick={() => setRating(star)}
+                className={`h-10 w-10 cursor-pointer ${
+                  star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                }`}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
+              </svg>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label htmlFor="comment" className="block text-sm font-medium text-gray-700">Your Comment</label>
+          <textarea
+            id="comment"
+            name="comment"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows="5"
+            placeholder="Describe your experience with the service provider..."
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+          ></textarea>
+        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting || rating === 0 || !comment.trim()}
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "Submitting Review..." : "Submit Review"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Main page component, which handles the overall layout and Suspense
+export default function LeaveReviewPageWrapper() {
+  const router = useRouter(); // router is still needed at the top level for redirection
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // Separate loading for auth
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        router.push("/signin");
+        return;
+      }
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  if (authLoading) {
+    return (
       <div className="flex flex-col min-h-screen">
         <Header navItems={customerNavItems} userType="customer" />
         <main className="flex-1 pt-16 bg-gray-50 flex justify-center items-center">
@@ -119,72 +208,19 @@ export default function LeaveReviewPage() {
     );
   }
 
-  if (error && !isSubmitting) { // Only show error if not currently submitting
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header navItems={customerNavItems} userType="customer" />
-        <main className="flex-1 pt-16 bg-gray-50 p-8 text-center text-red-600">
-          <p>{error}</p>
-          <Link href="/customer/orders" className="btn-primary mt-4">Back to Orders</Link>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
+  // Once authentication is complete, render the content with Suspense
   return (
     <div className="flex flex-col min-h-screen">
       <Header navItems={customerNavItems} userType="customer" />
       <main className="flex-1 pt-16 bg-gray-50 p-6 md:p-8">
-        <div className="container mx-auto max-w-2xl bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Leave a Review</h1>
-          <p className="text-center text-gray-600 mb-6">
-            Share your experience with <span className="font-bold">{providerName}</span> for your recent order.
-          </p>
-
-          {error && <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-md">{error}</div>}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Your Rating</label>
-              <div className="flex justify-center space-x-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <svg
-                    key={star}
-                    onClick={() => setRating(star)}
-                    className={`h-10 w-10 cursor-pointer ${
-                      star <= rating ? 'text-yellow-400' : 'text-gray-300'
-                    }`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
-                  </svg>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label htmlFor="comment" className="block text-sm font-medium text-gray-700">Your Comment</label>
-              <textarea
-                id="comment"
-                name="comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows="5"
-                placeholder="Describe your experience with the service provider..."
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
-              ></textarea>
-            </div>
-            <button
-              type="submit"
-              disabled={isSubmitting || rating === 0 || !comment.trim()}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Submitting Review..." : "Submit Review"}
-            </button>
-          </form>
-        </div>
+        {/* Wrap LeaveReviewContent in Suspense */}
+        <Suspense fallback={
+          <div className="flex justify-center items-center h-full text-gray-600">
+            Loading review form...
+          </div>
+        }>
+          <LeaveReviewContent />
+        </Suspense>
       </main>
       <Footer />
     </div>

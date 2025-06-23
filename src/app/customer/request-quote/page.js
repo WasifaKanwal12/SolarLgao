@@ -1,7 +1,6 @@
-// src/app/customer/request-quote/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react"; // Import Suspense
 import { useSearchParams, useRouter } from "next/navigation";
 import { auth } from "@/lib/config";
 import { onAuthStateChanged } from "firebase/auth";
@@ -10,9 +9,19 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
-export default function RequestQuotePage() {
+
+// Nav items for the header - can be outside the component
+const customerNavItems = [
+  { name: "Home", href: "/customer" },
+  { name: "My Quotes", href: "/customer/quotes" },
+  { name: "My Orders", href: "/customer/orders" },
+  { name: "Request Quote", href: "/customer/request-quote" },
+];
+
+// New component to encapsulate logic that uses useSearchParams
+function RequestQuoteContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // This hook is now safely within a Suspense-wrapped component
   const providerId = searchParams.get('providerId');
   const serviceId = searchParams.get('serviceId');
 
@@ -32,14 +41,6 @@ export default function RequestQuotePage() {
     powerRequirement: "",
     message: "",
   });
-
-  // Nav items for the header
-  const customerNavItems = [
-    { name: "Home", href: "/customer" },
-    { name: "My Quotes", href: "/customer/quotes" },
-    { name: "My Orders", href: "/customer/orders" },
-    { name: "Request Quote", href: "/customer/request-quote" },
-  ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -78,7 +79,7 @@ export default function RequestQuotePage() {
     });
 
     return () => unsubscribe();
-  }, [router, providerId, serviceId]);
+  }, [router, providerId, serviceId]); // Added providerId, serviceId as dependencies
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -138,6 +139,183 @@ export default function RequestQuotePage() {
 
   if (loading) {
     return (
+      <div className="flex justify-center items-center h-full">
+        <div className="loader"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-600">
+        <p>{error}</p>
+        <Link href="/customer" className="btn-primary mt-4">Back to Providers</Link>
+      </div>
+    );
+  }
+
+  if (!provider || !service) {
+    return (
+      <div className="p-8 text-center text-gray-700">
+        <p>Could not load provider or service details. Please try again from the home page.</p>
+        <Link href="/customer" className="btn-primary mt-4">Back to Providers</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto max-w-3xl bg-white p-8 rounded-lg shadow-md">
+      <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Request a Quote</h1>
+      <p className="text-center text-gray-600 mb-6">
+        Sending a quote request to <span className="font-bold">{provider.companyName}</span> for their service: <span className="font-bold">{service.title}</span>.
+      </p>
+
+      {error && <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-md">{error}</div>}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Your Full Name</label>
+            <input
+              type="text"
+              id="customerName"
+              name="customerName"
+              value={formData.customerName}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700">Your Email</label>
+            <input
+              type="email"
+              id="customerEmail"
+              name="customerEmail"
+              value={formData.customerEmail}
+              onChange={handleChange}
+              required
+              readOnly
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="customerContact" className="block text-sm font-medium text-gray-700">Contact Number</label>
+          <input
+            type="tel"
+            id="customerContact"
+            name="customerContact"
+            value={formData.customerContact}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700">Property Address</label>
+          <input
+            type="text"
+            id="customerAddress"
+            name="customerAddress"
+            value={formData.customerAddress}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="propertyType" className="block text-sm font-medium text-gray-700">Property Type</label>
+            <select
+              id="propertyType"
+              name="propertyType"
+              value={formData.propertyType}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select...</option>
+              <option value="Residential">Residential</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Industrial">Industrial</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="roofType" className="block text-sm font-medium text-gray-700">Roof Type</label>
+            <select
+              id="roofType"
+              name="roofType"
+              value={formData.roofType}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select...</option>
+              <option value="Pitched">Pitched</option>
+              <option value="Flat">Flat</option>
+              <option value="Ground Mount">Ground Mount</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label htmlFor="powerRequirement" className="block text-sm font-medium text-gray-700">Estimated Power Requirement (kW)</label>
+          <input
+            type="text"
+            id="powerRequirement"
+            name="powerRequirement"
+            value={formData.powerRequirement}
+            onChange={handleChange}
+            placeholder="e.g., 5kW, 10kW, Off-grid for cabin"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="message" className="block text-sm font-medium text-gray-700">Your Message / Specific Request</label>
+          <textarea
+            id="message"
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            rows="4"
+            placeholder="Tell the provider more about your needs..."
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+          ></textarea>
+        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "Sending Quote..." : "Send Quote Request"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Main page component, which handles the overall layout and Suspense
+export default function RequestQuotePageWrapper() {
+  const router = useRouter(); // router is still needed at the top level for redirection
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // Separate loading for auth
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        router.push("/signin");
+        return;
+      }
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  if (authLoading) {
+    return (
       <div className="flex flex-col min-h-screen">
         <Header navItems={customerNavItems} userType="customer" />
         <main className="flex-1 pt-16 bg-gray-50 flex justify-center items-center">
@@ -148,165 +326,19 @@ export default function RequestQuotePage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header navItems={customerNavItems} userType="customer" />
-        <main className="flex-1 pt-16 bg-gray-50 p-8 text-center text-red-600">
-          <p>{error}</p>
-          <Link href="/customer" className="btn-primary mt-4">Back to Providers</Link>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!provider || !service) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header navItems={customerNavItems} userType="customer" />
-        <main className="flex-1 pt-16 bg-gray-50 p-8 text-center text-gray-700">
-          <p>Could not load provider or service details. Please try again from the home page.</p>
-          <Link href="/customer" className="btn-primary mt-4">Back to Providers</Link>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
+  // Once authentication is complete, render the content with Suspense
   return (
     <div className="flex flex-col min-h-screen">
       <Header navItems={customerNavItems} userType="customer" />
       <main className="flex-1 pt-16 bg-gray-50 p-6 md:p-8">
-        <div className="container mx-auto max-w-3xl bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Request a Quote</h1>
-          <p className="text-center text-gray-600 mb-6">
-            Sending a quote request to <span className="font-bold">{provider.companyName}</span> for their service: <span className="font-bold">{service.title}</span>.
-          </p>
-
-          {error && <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-md">{error}</div>}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Your Full Name</label>
-                <input
-                  type="text"
-                  id="customerName"
-                  name="customerName"
-                  value={formData.customerName}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700">Your Email</label>
-                <input
-                  type="email"
-                  id="customerEmail"
-                  name="customerEmail"
-                  value={formData.customerEmail}
-                  onChange={handleChange}
-                  required
-                  readOnly // Email should be pre-filled and non-editable for logged-in users
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 bg-gray-100 cursor-not-allowed"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="customerContact" className="block text-sm font-medium text-gray-700">Contact Number</label>
-              <input
-                type="tel"
-                id="customerContact"
-                name="customerContact"
-                value={formData.customerContact}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700">Property Address</label>
-              <input
-                type="text"
-                id="customerAddress"
-                name="customerAddress"
-                value={formData.customerAddress}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="propertyType" className="block text-sm font-medium text-gray-700">Property Type</label>
-                <select
-                  id="propertyType"
-                  name="propertyType"
-                  value={formData.propertyType}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select...</option>
-                  <option value="Residential">Residential</option>
-                  <option value="Commercial">Commercial</option>
-                  <option value="Industrial">Industrial</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="roofType" className="block text-sm font-medium text-gray-700">Roof Type</label>
-                <select
-                  id="roofType"
-                  name="roofType"
-                  value={formData.roofType}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select...</option>
-                  <option value="Pitched">Pitched</option>
-                  <option value="Flat">Flat</option>
-                  <option value="Ground Mount">Ground Mount</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="powerRequirement" className="block text-sm font-medium text-gray-700">Estimated Power Requirement (kW)</label>
-              <input
-                type="text"
-                id="powerRequirement"
-                name="powerRequirement"
-                value={formData.powerRequirement}
-                onChange={handleChange}
-                placeholder="e.g., 5kW, 10kW, Off-grid for cabin"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700">Your Message / Specific Request</label>
-              <textarea
-                id="message"
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                rows="4"
-                placeholder="Tell the provider more about your needs..."
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
-              ></textarea>
-            </div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Sending Quote..." : "Send Quote Request"}
-            </button>
-          </form>
-        </div>
+        {/* Wrap RequestQuoteContent in Suspense */}
+        <Suspense fallback={
+          <div className="flex justify-center items-center h-full text-gray-600">
+            Loading quote details...
+          </div>
+        }>
+          <RequestQuoteContent />
+        </Suspense>
       </main>
       <Footer />
     </div>
