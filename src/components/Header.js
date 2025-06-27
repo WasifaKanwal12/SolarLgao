@@ -81,7 +81,7 @@ export default function Header() {
               <Link href="/#contact" className="hover:text-primary-green transition-colors" onClick={toggleMenu}>
                 Contact
               </Link>
-              <Link href="/provider/signup" className="text-primary-green hover:underline" onClick={toggleMenu}>
+              <Link href="/signup" className="text-primary-green hover:underline" onClick={toggleMenu}>
                 Become a Seller
               </Link>
               <Link href="/signin" className="btn-primary inline-block text-center" onClick={toggleMenu}>

@@ -147,32 +147,33 @@ export default function Home() {
             </div>
 
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black">
                 Embrace renewable energy to
                 <br />
                 nurture a greener planet
               </h2>
               <p className="text-gray-600 mb-8">
-                At Solar Lagao, we're committed to making solar energy accessible to everyone. Our mission is to
+                At Solar Lgao, we're committed to making solar energy accessible to everyone. Our mission is to
                 accelerate the transition to sustainable energy through innovative solutions and exceptional service. We
                 connect you with verified providers who offer high-quality solar installations tailored to your specific
                 needs.
               </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-y-8 md:gap-4 text-center">
+                 <div>
+                <p className="text-3xl font-bold text-primary-green">8000KW+</p>
+               <p className="text-gray-600">Energy Saved</p>
+               </div>
+                  <div>
+                    <p className="text-3xl font-bold text-primary-green">10K+</p>
+               <p className="text-gray-600">Global Clients</p>
+                 </div>
+             <div>
+               <p className="text-3xl font-bold text-primary-green">98%</p>
+                <p className="text-gray-600">Client Satisfaction</p>
+             </div>
+           </div>
 
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-3xl font-bold text-primary-green">8000KW+</p>
-                  <p className="text-gray-600">Energy Saved</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-primary-green">10K+</p>
-                  <p className="text-gray-600">Global Clients</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-primary-green">98%</p>
-                  <p className="text-gray-600">Client Satisfaction</p>
-                </div>
-              </div>
+            
             </div>
           </div>
         </div>
@@ -194,12 +195,12 @@ export default function Home() {
       {/* Clients Section */}
       <section id="clients" className="py-16 bg-gray-50">
         <div className="container-custom">
-          <h2 className="section-title">Words of Our Clients</h2>
+          <h2 className="section-title text-black">Words of Our Clients</h2>
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
             See what our customers say about our company & the product
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 text-black md:grid-cols-2 lg:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <TestimonialCard
                 key={index}
@@ -292,60 +293,60 @@ export default function Home() {
               <form className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="firstName" className="block text-sm font-medium text-black mb-1">
                       First Name
                     </label>
                     <input
                       type="text"
                       id="firstName"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-primary-green"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="lastName" className="block text-sm font-medium text-black mb-1">
                       Last Name
                     </label>
                     <input
                       type="text"
                       id="lastName"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-primary-green"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-black mb-1">
                     Email
                   </label>
                   <input
                     type="email"
                     id="email"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-primary-green"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="phone" className="block text-sm font-medium text-black mb-1">
                     Phone Number
                   </label>
                   <input
                     type="tel"
                     id="phone"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-primary-green"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="message" className="block text-sm font-medium text-black mb-1">
                     Message
                   </label>
                   <textarea
                     id="message"
                     rows="4"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-primary-green"
                     required
                   ></textarea>
                 </div>

@@ -34,7 +34,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick Links md:text-left text-center*/}
+          
           <div>
   <h3 className="text-lg md:text-left text-center font-semibold mb-4">Quick Links</h3>
   <ul className="space-y-2">
@@ -48,7 +49,7 @@ export default function Footer() {
 
           {/* Services */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Services</h3>
+            <h3 className="text-lg md:text-left text-center font-semibold  mb-4">Services</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/#services" className="hover:text-primary-green transition-colors">
@@ -80,7 +81,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
+            <h3 className="text-lg md:text-left text-center font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-2">
               <li className="flex items-center">
                 <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
