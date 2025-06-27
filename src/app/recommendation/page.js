@@ -123,7 +123,7 @@ export default function RecommendationPage() {
               placeholder="Location (e.g. Lahore, Pakistan)"
               value={formData.location}
               onChange={handleChange}
-              className="w-full border px-4 py-2 rounded"
+              className="w-full border px-4 py-2 rounded text-black"
               required
             />
             <input
@@ -132,14 +132,14 @@ export default function RecommendationPage() {
               type="number"
               value={formData.electricity_kwh_per_month}
               onChange={handleChange}
-              className="w-full border px-4 py-2 rounded"
+              className="w-full border px-4 py-2 rounded text-black"
             />
             <textarea
               name="usage_prompt"
               placeholder="OR describe your electricity usage (e.g. 'I use 2 ACs for 8 hours daily')"
               value={formData.usage_prompt}
               onChange={handleChange}
-              className="w-full border px-4 py-2 rounded"
+              className="w-full border px-4 py-2 rounded text-black"
               rows={3}
             />
             <button
@@ -160,7 +160,7 @@ export default function RecommendationPage() {
           {transformedRecommendations.length > 0 && (
             <div className="mt-8 p-4 bg-gray-50 rounded-lg">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Recommended Solar System</h2>
+                <h2 className="text-xl text-black font-semibold">Recommended Solar System</h2>
                 <button
                   onClick={downloadRecommendationsAsCsv}
                   disabled={isLoading}
@@ -176,27 +176,27 @@ export default function RecommendationPage() {
                 <table className="w-full table-auto border min-w-full"> {/* Added min-w-full */}
                   <thead>
                     <tr className="bg-gray-200">
-                      <th className="p-2 whitespace-nowrap">System Size</th>
-                      <th className="p-2 whitespace-nowrap">Panels</th>
-                      <th className="p-2 whitespace-nowrap">Inverter</th>
-                      <th className="p-2 whitespace-nowrap">Battery</th>
-                      <th className="p-2 whitespace-nowrap">System Type</th>
-                      <th className="p-2 whitespace-nowrap">Panel Type</th>
-                      <th className="p-2 whitespace-nowrap">Backup</th>
-                      <th className="p-2 whitespace-nowrap">Payback</th>
+                      <th className="p-2 whitespace-nowrap text-black">System Size</th>
+                      <th className="p-2 whitespace-nowrap text-black">Panels</th>
+                      <th className="p-2 whitespace-nowrap text-black">Inverter</th>
+                      <th className="p-2 whitespace-nowrap text-black">Battery</th>
+                      <th className="p-2 whitespace-nowrap text-black">System Type</th>
+                      <th className="p-2 whitespace-nowrap text-black">Panel Type</th>
+                      <th className="p-2 whitespace-nowrap text-black">Backup</th>
+                      <th className="p-2 whitespace-nowrap text-black">Payback</th>
                     </tr>
                   </thead>
                   <tbody>
                     {transformedRecommendations.map((rec, i) => (
                       <tr key={i} className="text-center border-t">
-                        <td className="p-2 whitespace-nowrap">{rec.system_size} {rec.system_size_unit}</td>
-                        <td className="p-2 whitespace-nowrap">{rec.solar_panels} {rec.solar_panels_unit}</td>
-                        <td className="p-2 whitespace-nowrap">{rec.inverter_size} {rec.inverter_size_unit}</td>
-                        <td className="p-2 whitespace-nowrap">{rec.battery_storage} {rec.battery_storage_unit}</td>
-                        <td className="p-2 whitespace-nowrap">{rec.system_type}</td>
-                        <td className="p-2 whitespace-nowrap">{rec.panel_type}</td>
-                        <td className="p-2 whitespace-nowrap">{rec.backup_hours} {rec.backup_hours_unit}</td>
-                        <td className="p-2 whitespace-nowrap">{rec.payback_period} {rec.payback_period_unit}</td>
+                        <td className="p-2 whitespace-nowrap text-black">{rec.system_size} {rec.system_size_unit}</td>
+                        <td className="p-2 whitespace-nowrap text-black">{rec.solar_panels} {rec.solar_panels_unit}</td>
+                        <td className="p-2 whitespace-nowrap text-black">{rec.inverter_size} {rec.inverter_size_unit}</td>
+                        <td className="p-2 whitespace-nowrap text-black">{rec.battery_storage} {rec.battery_storage_unit}</td>
+                        <td className="p-2 whitespace-nowrap text-black">{rec.system_type}</td>
+                        <td className="p-2 whitespace-nowrap text-black">{rec.panel_type}</td>
+                        <td className="p-2 whitespace-nowrap text-black">{rec.backup_hours} {rec.backup_hours_unit}</td>
+                        <td className="p-2 whitespace-nowrap text-black">{rec.payback_period} {rec.payback_period_unit}</td>
                       </tr>
                     ))}
                   </tbody>

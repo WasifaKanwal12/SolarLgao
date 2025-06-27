@@ -66,19 +66,19 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4">
             <nav className="flex flex-col space-y-3">
-              <Link href="/" className="hover:text-primary-green transition-colors" onClick={toggleMenu}>
+              <Link href="/" className="hover:text-primary-green transition-colors text-black" onClick={toggleMenu}>
                 Home
               </Link>
-              <Link href="/#about" className="hover:text-primary-green transition-colors" onClick={toggleMenu}>
+              <Link href="/#about" className="hover:text-primary-green transition-colors text-black" onClick={toggleMenu}>
                 About
               </Link>
-              <Link href="/#services" className="hover:text-primary-green transition-colors" onClick={toggleMenu}>
+              <Link href="/#services" className="hover:text-primary-green transition-colors text-black" onClick={toggleMenu}>
                 Services
               </Link>
-              <Link href="/#clients" className="hover:text-primary-green transition-colors" onClick={toggleMenu}>
+              <Link href="/#clients" className="hover:text-primary-green transition-colors text-black" onClick={toggleMenu}>
                 Clients
               </Link>
-              <Link href="/#contact" className="hover:text-primary-green transition-colors" onClick={toggleMenu}>
+              <Link href="/#contact" className="hover:text-primary-green transition-colors text-black" onClick={toggleMenu}>
                 Contact
               </Link>
               <Link href="/signup" className="text-primary-green hover:underline" onClick={toggleMenu}>

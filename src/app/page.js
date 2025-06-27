@@ -293,7 +293,7 @@ export default function Home() {
               <form className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-black mb-1">
+                    <label htmlFor="firstName" className="block text-sm font-medium text-white md:text-black mb-1">
                       First Name
                     </label>
                     <input
@@ -304,7 +304,7 @@ export default function Home() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-black mb-1">
+                    <label htmlFor="lastName" className="block text-sm font-medium text-white md:text-black mb-1">
                       Last Name
                     </label>
                     <input
@@ -317,7 +317,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-black mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-white md:text-black mb-1">
                     Email
                   </label>
                   <input
@@ -329,7 +329,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-black mb-1">
+                  <label htmlFor="phone" className="block text-sm font-medium text-white md:text-black mb-1">
                     Phone Number
                   </label>
                   <input
@@ -340,7 +340,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-black mb-1">
+                  <label htmlFor="message" className="block text-sm font-medium text-white md:text-black mb-1">
                     Message
                   </label>
                   <textarea
