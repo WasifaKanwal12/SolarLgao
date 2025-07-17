@@ -1,3 +1,5 @@
+// components/Header.js (or wherever your Header component is)
+
 "use client"
 
 import { useState } from "react"
@@ -42,7 +44,8 @@ export default function Header() {
 
           {/* Right Side Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/signup" className="text-primary-green hover:underline">
+            {/* Modified Link for "Become a Seller" */}
+            <Link href="/signup?userType=provider" className="text-primary-green hover:underline">
               Become a Seller
             </Link>
             <Link href="/signin" className="btn-primary">
@@ -81,7 +84,8 @@ export default function Header() {
               <Link href="/#contact" className="hover:text-primary-green transition-colors text-black" onClick={toggleMenu}>
                 Contact
               </Link>
-              <Link href="/signup" className="text-primary-green hover:underline" onClick={toggleMenu}>
+              {/* Modified Link for "Become a Seller" in mobile menu */}
+              <Link href="/signup?userType=provider" className="text-primary-green hover:underline" onClick={toggleMenu}>
                 Become a Seller
               </Link>
               <Link href="/signin" className="btn-primary inline-block text-center" onClick={toggleMenu}>
@@ -94,4 +98,3 @@ export default function Header() {
     </header>
   )
 }
-
