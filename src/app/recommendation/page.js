@@ -6,28 +6,37 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 // Define a list of common appliances with average wattage (for display in dropdown)
-const commonAppliances = [
-  { name: "SELECT AN APPLIANCE (Optional)", watts: 0 },
-  { name: "AC (Window/Split)", watts: 1500 }, // Average for a common AC unit
-  { name: "Refrigerator (Standard)", watts: 200 },
-  { name: "Television (LED 40-50 inch)", watts: 100 },
-  { name: "Washing Machine", watts: 2000 }, // Peak during wash cycle
-  { name: "Water Heater", watts: 3000 },
-  { name: "Microwave Oven", watts: 1200 },
-  { name: "Oven (Electric)", watts: 2500 },
-  { name: "Desktop Computer", watts: 250 },
-  { name: "Laptop Computer", watts: 60 },
-  { name: "Light Bulb (LED)", watts: 10 },
-  { name: "Ceiling Fan", watts: 75 },
-  { name: "Electric Iron", watts: 1000 },
-  { name: "Hair Dryer", watts: 1800 },
-  { name: "Dishwasher", watts: 1800 },
-  { name: "Vacuum Cleaner", watts: 1400 },
-  { name: "Toaster", watts: 1000 },
-  { name: "Blender", watts: 500 },
-  { name: "Coffee Maker", watts: 1000 },
-  { name: "Heater (Portable)", watts: 1500 },
-  { name: "Electric Kettle", watts: 2000 },
+
+  const commonAppliances = [
+  {name: "LED Bulb", watts: 10},
+  {name: "Tube Light", watts: 40},
+  {name: "Ceiling Fan", watts: 70},
+  {name: "Table Fan", watts: 60},
+  {name: "Inverter AC (1.5 Ton)", watts: 1200},
+  {name: "Refrigerator (200 L)", watts: 725},
+  {name: "Deep Freezer (200 L)", watts: 1080},
+  {name: "Washing Machine", watts: 500},
+  {name: "Clothes Iron", watts: 1400},
+  {name: "Vacuum Cleaner", watts: 1000},
+  {name: "Dishwasher", watts: 1800},
+  {name: "Microwave Oven", watts: 1000},
+  {name: "Electric Kettle", watts: 1500},
+  {name: "Rice Cooker", watts: 700},
+  {name: "Mixer Grinder", watts: 300},
+  {name: "Electric Stove", watts: 1500},
+  {name: "Deep-Well Pump", watts: 400},
+  {name: "Water Dispenser", watts: 100},
+  {name: "Electric Water Heater", watts: 4500},
+  {name: "LED TV (32\")", watts: 60},
+  {name: "Projector", watts: 170},
+  {name: "Clock Radio", watts: 10},
+  {name: "Set-Top Box", watts: 15},
+  {name: "Desktop Computer", watts: 300},
+  {name: "Laptop", watts: 60},
+  {name: "Wi-Fi Router", watts: 15},
+  {name: "UPS (Home Backup)", watts: 300},
+  {name: "Sewing Machine", watts: 100},
+  {name: "Smartphone Charger", watts: 5},
 ];
 
 export default function RecommendationPage() {
@@ -39,6 +48,7 @@ export default function RecommendationPage() {
     appliances: [], // For selectable appliances from the list
   });
   const [customAppliances, setCustomAppliances] = useState([{ name: '', quantity: '', hoursPerDay: '' }]); // For custom appliances, start with one empty row
+  const [inputMethod, setInputMethod] = useState(''); // 'kwh' or 'appliances'
   const [recommendations, setRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
@@ -92,8 +102,33 @@ export default function RecommendationPage() {
     setCustomAppliances(newCustomAppliances);
   };
 
-  const nextStep = () => setStep((prev) => prev + 1);
-  const prevStep = () => setStep((prev) => prev - 1);
+  const nextStep = () => {
+    // Special handling for step 3 (input method selection)
+    if (step === 3) {
+      if (!inputMethod) return; // Prevent moving forward if no method is selected
+      if (inputMethod === 'kwh') {
+        setStep(4); // Skip appliance step
+      } else if (inputMethod === 'appliances') {
+        setStep(5); // Go to appliance step
+      }
+    } else {
+      setStep((prev) => prev + 1);
+    }
+  };
+
+  const prevStep = () => {
+  if (step === 6) { // If currently on the recommendations step
+    if (inputMethod === 'kwh') {
+      setStep(4); // Go back to KWH input if that was the method
+    } else { // inputMethod === 'appliances'
+      setStep(5); // Go back to appliances input if that was the method
+    }
+  } else if (step === 5 || step === 4) { // If on KWH input or Appliances input
+    setStep(3); // Always go back to input method selection (Step 3)
+  } else { // For all other steps (1, 2, 3)
+    setStep((prev) => prev - 1);
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,18 +137,22 @@ export default function RecommendationPage() {
     setRecommendations([]);
 
     try {
-      // Combine both lists of appliances, filtering out incomplete entries
-      const allAppliances = [
-        ...formData.appliances.filter(app => app.name && app.quantity && app.hoursPerDay),
-        ...customAppliances.filter(app => app.name && app.quantity && app.hoursPerDay)
-      ];
-
-      const payload = {
+      let payload = {
         location: formData.location,
-        electricity_kwh_per_month: formData.electricity_kwh_per_month,
         system_type: formData.systemType,
-        appliances: allAppliances, // Send combined and filtered appliances
       };
+
+      if (inputMethod === 'kwh') {
+        payload.electricity_kwh_per_month = formData.electricity_kwh_per_month;
+        payload.appliances = []; // Ensure appliances array is empty if not used
+      } else { // inputMethod === 'appliances'
+        const allAppliances = [
+          ...formData.appliances.filter(app => app.name && app.quantity && app.hoursPerDay),
+          ...customAppliances.filter(app => app.name && app.quantity && app.hoursPerDay)
+        ];
+        payload.appliances = allAppliances;
+        payload.electricity_kwh_per_month = ''; // Ensure this is empty if not used
+      }
 
       const response = await fetch('/api/recommendation', {
         method: 'POST',
@@ -134,7 +173,7 @@ export default function RecommendationPage() {
       } else {
         throw new Error("Received unexpected data format from the recommendation API.");
       }
-      setStep(5); // Move to the results step
+      setStep(6); // Move to the results step
     } catch (error) {
       console.error('Error fetching recommendations:', error);
       setApiError(error.message);
@@ -210,9 +249,16 @@ export default function RecommendationPage() {
 
   // Determine if the submit button should be disabled
   const isSubmitDisabled = isLoading || (
-    formData.appliances.filter(app => app.name && app.quantity && app.hoursPerDay).length === 0 &&
-    customAppliances.filter(app => app.name && app.quantity && app.hoursPerDay).length === 0
+    (inputMethod === 'appliances' &&
+      formData.appliances.filter(app => app.name && app.quantity && app.hoursPerDay).length === 0 &&
+      customAppliances.filter(app => app.name && app.quantity && app.hoursPerDay).length === 0) ||
+    (inputMethod === 'kwh' && !formData.electricity_kwh_per_month)
   );
+
+
+  // Define total steps for progress bar
+  const totalSteps = 6;
+  const progressSteps = Array.from({ length: totalSteps }, (_, i) => i + 1);
 
   return (
     <>
@@ -225,7 +271,7 @@ export default function RecommendationPage() {
 
             {/* Progress Bar */}
             <div className="flex justify-between mb-8">
-              {[1, 2, 3, 4, 5].map((s) => (
+              {progressSteps.map((s) => (
                 <div key={s} className={`flex-1 text-center ${s <= step ? 'text-green-600 font-bold' : 'text-gray-400'}`}>
                   Step {s}
                   {s <= step && (
@@ -311,8 +357,51 @@ export default function RecommendationPage() {
               </div>
             )}
 
-            {/* Step 3: Monthly Electricity Consumption */}
+            {/* Step 3: Input Method Selection */}
             {step === 3 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 text-black">How would you like to calculate your energy needs?</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    className={`p-4 border rounded-lg text-center ${inputMethod === 'kwh' ? 'bg-green-600 text-white' : 'bg-gray-100 text-black hover:bg-green-100'}`}
+                    onClick={() => setInputMethod('kwh')}
+                  >
+                    <h3 className="font-semibold">By Monthly Electricity Consumption</h3>
+                    <p className="text-sm">Provide your average monthly electricity bill in kWh.</p>
+                  </button>
+                  <button
+                    type="button"
+                    className={`p-4 border rounded-lg text-center ${inputMethod === 'appliances' ? 'bg-green-600 text-white' : 'bg-gray-100 text-black hover:bg-green-100'}`}
+                    onClick={() => setInputMethod('appliances')}
+                  >
+                    <h3 className="font-semibold">By Listing Appliances</h3>
+                    <p className="text-sm">List the appliances you use, their quantity, and hours of operation.</p>
+                  </button>
+                </div>
+                <div className="flex justify-between mt-6">
+                  <button
+                    type="button"
+                    onClick={prevStep}
+                    className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={!inputMethod}
+                    className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-green-200"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+
+            {/* Step 4: Monthly Electricity Consumption (Conditional) */}
+            {step === 4 && inputMethod === 'kwh' && (
               <div>
                 <h2 className="text-xl font-semibold mb-4 text-black">Enter your average monthly electricity consumption.</h2>
                 <p className="text-gray-700 mb-4">Please provide your average monthly electricity consumption in kWh.</p>
@@ -334,19 +423,19 @@ export default function RecommendationPage() {
                     Previous
                   </button>
                   <button
-                    type="button"
-                    onClick={nextStep}
-                    disabled={!formData.electricity_kwh_per_month}
+                    type="submit"
+                    onClick={handleSubmit}
+                    disabled={isSubmitDisabled}
                     className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-green-200"
                   >
-                    Next
+                    {isLoading ? 'Calculating...' : 'Get Recommendations'}
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step 4: Appliances */}
-            {step === 4 && (
+            {/* Step 5: Appliances (Conditional) */}
+            {step === 5 && inputMethod === 'appliances' && (
               <div>
                 <h2 className="text-xl font-semibold mb-4 text-black">Tell us about your appliances.</h2>
                 <p className="text-gray-700 mb-4">Add the appliances you use, their quantity, and how many hours per day they are on. This helps us calculate your load. You can select from common appliances or add your own below.</p>
@@ -501,8 +590,8 @@ export default function RecommendationPage() {
               </div>
             )}
 
-            {/* Step 5: Recommendations */}
-            {step === 5 && (
+            {/* Step 6: Recommendations */}
+            {step === 6 && (
               <div>
                 {apiError && (
                   <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md">
