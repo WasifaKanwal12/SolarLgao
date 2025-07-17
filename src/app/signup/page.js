@@ -1,9 +1,8 @@
 // app/signup/page.js
-
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { convertToBase64 } from "@/lib/fileUtils";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,28 +10,27 @@ import AuthSuccess from "@/components/AuthSuccess";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { auth } from "@/lib/config";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-export const dynamic = 'force-dynamic';
+
 export default function SignUp() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    userType: "customer", // Default to customer initially
+    userType: "customer",
     companyName: "",
     registrationNumber: "",
     contactNumber: "",
     companyAddress: "",
     servicesOffered: "",
     serviceLocations: "",
-    description: "",
-    website: "",
+    description: "", // Added description field
+    website: "", // Added website field
   });
   const [certificateFile, setCertificateFile] = useState(null);
-  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImageFile, setProfileImageFile] = useState(null); // New for profile image
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -46,16 +44,6 @@ export default function SignUp() {
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&()?.\\-])[A-Za-z\d@$!%*?&()?.\\-]{8,}$/;
   const personalDomains = ["gmail.com", "yahoo.com", "outlook.com"];
   const allowedTLDs = ["com", "net", "org", "pk", "edu", "gov", "co"];
-
-  // Determine if the user arrived from "Become a Seller" link
-  const isSellerSignup = searchParams.get('userType') === 'provider';
-
-  // Effect to set userType based on query parameter on component mount
-  useEffect(() => {
-    if (isSellerSignup) {
-      setFormData(prev => ({ ...prev, userType: 'provider' }));
-    }
-  }, [isSellerSignup]); // Depend on isSellerSignup
 
   const validateField = (name, value, currentFormData) => {
     let message = "";
@@ -188,6 +176,7 @@ export default function SignUp() {
       if (data.servicesOffered.trim() === "") errors.servicesOffered = "Services Offered are required.";
       if (data.serviceLocations.trim() === "") errors.serviceLocations = "Service Locations are required.";
       if (!certificateFile) errors.certificateFile = "Certificate image is required.";
+      // Profile image is optional, so no validation here for it
     }
 
     return errors;
@@ -242,10 +231,10 @@ export default function SignUp() {
           companyAddress: formData.userType === "provider" ? formData.companyAddress : undefined,
           servicesOffered: formData.userType === "provider" ? formData.servicesOffered.split(',').map(s => s.trim()) : undefined,
           serviceLocations: formData.userType === "provider" ? formData.serviceLocations.split(',').map(l => l.trim()) : undefined,
-          description: formData.userType === "provider" ? formData.description : undefined,
-          website: formData.userType === "provider" ? formData.website : undefined,
+          description: formData.userType === "provider" ? formData.description : undefined, // Include description
+          website: formData.userType === "provider" ? formData.website : undefined, // Include website
           certificateBase64: formData.userType === "provider" ? certificateBase64 : undefined,
-          profileImageBase64: formData.userType === "provider" ? profileImageBase64 : undefined,
+          profileImageBase64: formData.userType === "provider" ? profileImageBase64 : undefined, // Include profile image base64
         }),
       });
       const data = await response.json();
@@ -407,55 +396,34 @@ export default function SignUp() {
                   )}
                 </div>
 
-                {/* Conditional rendering of user type selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">I am a: <RequiredAsterisk /></label>
                   <div className="flex space-x-4">
-                    {/* Always show Service Provider if it's a seller signup, and disable it */}
-                    {isSellerSignup ? (
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="userType"
-                          value="provider"
-                          checked={formData.userType === "provider"}
-                          onChange={handleChange}
-                          autoComplete="off"
-                          className="mr-2"
-                          disabled // Disable the radio button when pre-selected
-                        /> Service Provider
-                      </label>
-                    ) : (
-                      // Show both options for general signup
-                      <>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="userType"
-                            value="customer"
-                            checked={formData.userType === "customer"}
-                            onChange={handleChange}
-                            autoComplete="off"
-                            className="mr-2"
-                          /> Customer
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="userType"
-                            value="provider"
-                            checked={formData.userType === "provider"}
-                            onChange={handleChange}
-                            autoComplete="off"
-                            className="mr-2"
-                          /> Service Provider
-                        </label>
-                      </>
-                    )}
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="customer"
+                        checked={formData.userType === "customer"}
+                        onChange={handleChange}
+                        autoComplete="off"
+                        className="mr-2"
+                      /> Customer
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="provider"
+                        checked={formData.userType === "provider"}
+                        onChange={handleChange}
+                        autoComplete="off"
+                        className="mr-2"
+                      /> Service Provider
+                    </label>
                   </div>
                 </div>
 
-                {/* Service Provider fields, only show if userType is 'provider' */}
                 {formData.userType === "provider" && (
                   <>
                     <div>

@@ -1,4 +1,3 @@
-// app/recommendation/page.js
 "use client";
 
 import { useState } from 'react';
@@ -356,7 +355,8 @@ export default function RecommendationPage() {
                 <h3 className="text-lg font-semibold mb-2 text-black">Common Appliances:</h3>
                 <div className="space-y-4">
                   {formData.appliances.map((appliance, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center"> {/* Adjusted grid-cols to make space for delete button */}
+                    // Changed grid-cols-1 to md:grid-cols-5 for mobile responsiveness
+                    <div key={index} className="grid grid-cols-1 gap-4 items-center md:grid-cols-5">
                       {/* Predefined Appliance Dropdown */}
                       <select
                         name="name"
@@ -378,7 +378,7 @@ export default function RecommendationPage() {
                         type="number"
                         value={appliance.quantity}
                         onChange={(e) => handleApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black"
+                        className="w-full border px-4 py-2 rounded text-black md:col-span-1"
                       />
                       {/* Hours Per Day */}
                       <input
@@ -388,14 +388,14 @@ export default function RecommendationPage() {
                         step="0.1"
                         value={appliance.hoursPerDay}
                         onChange={(e) => handleApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black"
+                        className="w-full border px-4 py-2 rounded text-black md:col-span-1"
                       />
                       {/* Red Cross Delete Button - now part of the grid */}
                       <button
                         type="button"
                         onClick={() => removeAppliance(index)}
-                        className="text-red-500 hover:text-red-700 disabled:text-gray-300" // Removed ml-2 for better alignment in grid
-                        disabled={formData.appliances.length === 0} // Disable if no appliance is there to delete
+                        className="text-red-500 hover:text-red-700 disabled:text-gray-300 md:col-span-1"
+                        disabled={formData.appliances.length === 0}
                       >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path>
@@ -419,7 +419,8 @@ export default function RecommendationPage() {
                 <h3 className="text-lg font-semibold mb-2 text-black">Add Your Own Appliance:</h3>
                 <div className="space-y-4">
                   {customAppliances.map((appliance, index) => (
-                    <div key={`custom-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                    // Changed grid-cols-1 to md:grid-cols-5 for mobile responsiveness
+                    <div key={`custom-${index}`} className="grid grid-cols-1 gap-4 items-center md:grid-cols-5">
                       <input
                         name="name"
                         placeholder="Appliance Name (e.g., Gaming PC)"
@@ -434,7 +435,7 @@ export default function RecommendationPage() {
                         type="number"
                         value={appliance.quantity}
                         onChange={(e) => handleCustomApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black"
+                        className="w-full border px-4 py-2 rounded text-black md:col-span-1"
                       />
                       <input
                         name="hoursPerDay"
@@ -443,13 +444,13 @@ export default function RecommendationPage() {
                         step="0.1"
                         value={appliance.hoursPerDay}
                         onChange={(e) => handleCustomApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black"
+                        className="w-full border px-4 py-2 rounded text-black md:col-span-1"
                       />
                       <button
                         type="button"
                         onClick={() => removeCustomAppliance(index)}
-                        className="text-red-500 hover:text-red-700 disabled:text-gray-300"
-                        disabled={customAppliances.length === 1} // Ensure at least one custom appliance row remains
+                        className="text-red-500 hover:text-red-700 disabled:text-gray-300 md:col-span-1"
+                        disabled={customAppliances.length === 1}
                       >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path>
@@ -466,11 +467,11 @@ export default function RecommendationPage() {
                   + Add Another Custom Appliance
                 </button>
 
-                <div className="flex justify-between mt-6">
+                <div className="flex justify-end gap-4 mt-6"> {/* Changed justify-between to justify-end and added gap-4 */}
                   <button
                     type="button"
                     onClick={prevStep}
-                    className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400"
+                    className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400 w-auto" // Added w-auto
                   >
                     Previous
                   </button>
