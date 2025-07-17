@@ -426,6 +426,7 @@ export default function RecommendationPage() {
                         value={appliance.name}
                         onChange={(e) => handleCustomApplianceChange(index, e)}
                         className="w-full border px-4 py-2 rounded text-black col-span-2"
+                        autoComplete='off'
                       />
                       <input
                         name="quantity"
