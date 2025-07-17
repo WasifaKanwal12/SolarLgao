@@ -11,7 +11,7 @@ import AuthSuccess from "@/components/AuthSuccess";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { auth } from "@/lib/config";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-
+export const dynamic = 'force-dynamic';
 export default function SignUp() {
   const router = useRouter();
   const searchParams = useSearchParams();
