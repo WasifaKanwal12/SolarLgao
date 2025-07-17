@@ -355,52 +355,59 @@ export default function RecommendationPage() {
                 <h3 className="text-lg font-semibold mb-2 text-black">Common Appliances:</h3>
                 <div className="space-y-4">
                   {formData.appliances.map((appliance, index) => (
-                    // Changed grid-cols-1 to md:grid-cols-5 for mobile responsiveness
-                    <div key={index} className="grid grid-cols-1 gap-4 items-center md:grid-cols-5">
-                      {/* Predefined Appliance Dropdown */}
-                      <select
-                        name="name"
-                        value={appliance.name}
-                        onChange={(e) => handleApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black col-span-2"
-                      >
-                        {commonAppliances.map((item, idx) => (
-                          <option key={idx} value={item.name}>
-                            {item.name} {item.watts > 0 ? `(${item.watts}W avg)` : ''}
-                          </option>
-                        ))}
-                      </select>
+                    // Use flexbox for desktop, and grid for mobile to control row wrapping
+                    <div key={index} className="grid grid-cols-1 sm:grid-cols-5 gap-2 items-center">
+                      {/* Appliance Name (Dropdown) - Full width on mobile, spans 2 on sm+ */}
+                      <div className="col-span-full sm:col-span-2">
+                        <select
+                          name="name"
+                          value={appliance.name}
+                          onChange={(e) => handleApplianceChange(index, e)}
+                          className="w-full border px-2 py-1 rounded text-black"
+                        >
+                          {commonAppliances.map((item, idx) => (
+                            <option key={idx} value={item.name}>
+                              {item.name} {item.watts > 0 ? `(${item.watts}W avg)` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                      {/* Quantity */}
-                      <input
-                        name="quantity"
-                        placeholder="Qty"
-                        type="number"
-                        value={appliance.quantity}
-                        onChange={(e) => handleApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black md:col-span-1"
-                      />
-                      {/* Hours Per Day */}
-                      <input
-                        name="hoursPerDay"
-                        placeholder="Hrs/Day"
-                        type="number"
-                        step="0.1"
-                        value={appliance.hoursPerDay}
-                        onChange={(e) => handleApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black md:col-span-1"
-                      />
-                      {/* Red Cross Delete Button - now part of the grid */}
-                      <button
-                        type="button"
-                        onClick={() => removeAppliance(index)}
-                        className="text-red-500 hover:text-red-700 disabled:text-gray-300 md:col-span-1"
-                        disabled={formData.appliances.length === 0}
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path>
-                        </svg>
-                      </button>
+                      {/* Quantity, Hours Per Day, Delete Button - New row on mobile, 3 columns */}
+                      {/* On small screens, this div will be on the next row (due to col-span-full above) */}
+                      {/* For small screens (mobile), create an inner 3-column grid for Qty, Hrs, Delete */}
+                      <div className="col-span-full sm:col-span-3 grid grid-cols-3 gap-2 items-center">
+                        {/* Quantity */}
+                        <input
+                          name="quantity"
+                          placeholder="Qty"
+                          type="number"
+                          value={appliance.quantity}
+                          onChange={(e) => handleApplianceChange(index, e)}
+                          className="w-full border px-2 py-1 rounded text-black col-span-1" // Equal width
+                        />
+                        {/* Hours Per Day */}
+                        <input
+                          name="hoursPerDay"
+                          placeholder="Hrs/Day"
+                          type="number"
+                          step="0.1"
+                          value={appliance.hoursPerDay}
+                          onChange={(e) => handleApplianceChange(index, e)}
+                          className="w-full border px-2 py-1 rounded text-black col-span-1" // Equal width
+                        />
+                        {/* Red Cross Delete Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeAppliance(index)}
+                          className="text-red-500 hover:text-red-700 disabled:text-gray-300 col-span-1 flex justify-center items-center" // Take 1 col, center content
+                          disabled={formData.appliances.length === 0}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   ))}
                   <button
@@ -419,43 +426,50 @@ export default function RecommendationPage() {
                 <h3 className="text-lg font-semibold mb-2 text-black">Add Your Own Appliance:</h3>
                 <div className="space-y-4">
                   {customAppliances.map((appliance, index) => (
-                    // Changed grid-cols-1 to md:grid-cols-5 for mobile responsiveness
-                    <div key={`custom-${index}`} className="grid grid-cols-1 gap-4 items-center md:grid-cols-5">
-                      <input
-                        name="name"
-                        placeholder="Appliance Name (e.g., Gaming PC)"
-                        value={appliance.name}
-                        onChange={(e) => handleCustomApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black col-span-2"
-                        autoComplete='off'
-                      />
-                      <input
-                        name="quantity"
-                        placeholder="Qty"
-                        type="number"
-                        value={appliance.quantity}
-                        onChange={(e) => handleCustomApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black md:col-span-1"
-                      />
-                      <input
-                        name="hoursPerDay"
-                        placeholder="Hrs/Day"
-                        type="number"
-                        step="0.1"
-                        value={appliance.hoursPerDay}
-                        onChange={(e) => handleCustomApplianceChange(index, e)}
-                        className="w-full border px-4 py-2 rounded text-black md:col-span-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeCustomAppliance(index)}
-                        className="text-red-500 hover:text-red-700 disabled:text-gray-300 md:col-span-1"
-                        disabled={customAppliances.length === 1}
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path>
-                        </svg>
-                      </button>
+                    // Use flexbox for desktop, and grid for mobile to control row wrapping
+                    <div key={`custom-${index}`} className="grid grid-cols-1 sm:grid-cols-5 gap-2 items-center">
+                      {/* Appliance Name (Input) - Full width on mobile, spans 2 on sm+ */}
+                      <div className="col-span-full sm:col-span-2">
+                        <input
+                          name="name"
+                          placeholder="Appliance Name (e.g., Gaming PC)"
+                          value={appliance.name}
+                          onChange={(e) => handleCustomApplianceChange(index, e)}
+                          className="w-full border px-2 py-1 rounded text-black"
+                          autoComplete='off'
+                        />
+                      </div>
+
+                      {/* Quantity, Hours Per Day, Delete Button - New row on mobile, 3 columns */}
+                      <div className="col-span-full sm:col-span-3 grid grid-cols-3 gap-2 items-center">
+                        <input
+                          name="quantity"
+                          placeholder="Qty"
+                          type="number"
+                          value={appliance.quantity}
+                          onChange={(e) => handleCustomApplianceChange(index, e)}
+                          className="w-full border px-2 py-1 rounded text-black col-span-1" // Equal width
+                        />
+                        <input
+                          name="hoursPerDay"
+                          placeholder="Hrs/Day"
+                          type="number"
+                          step="0.1"
+                          value={appliance.hoursPerDay}
+                          onChange={(e) => handleCustomApplianceChange(index, e)}
+                          className="w-full border px-2 py-1 rounded text-black col-span-1" // Equal width
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeCustomAppliance(index)}
+                          className="text-red-500 hover:text-red-700 disabled:text-gray-300 col-span-1 flex justify-center items-center" // Take 1 col, center content
+                          disabled={customAppliances.length === 1}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -467,11 +481,11 @@ export default function RecommendationPage() {
                   + Add Another Custom Appliance
                 </button>
 
-                <div className="flex justify-end gap-4 mt-6"> {/* Changed justify-between to justify-end and added gap-4 */}
+                <div className="flex justify-end gap-4 mt-6"> {/* Added gap-4 for consistent spacing */}
                   <button
                     type="button"
                     onClick={prevStep}
-                    className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400 w-auto" // Added w-auto
+                    className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400"
                   >
                     Previous
                   </button>
