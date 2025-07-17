@@ -1,13 +1,37 @@
 // src/app/customer/quotes/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // Add useCallback
 import { auth } from "@/lib/config";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+
+// --- Loader Component (can be a shared component, like in CustomerOrdersPage) ---
+const Loader = () => (
+  <div className="flex flex-col items-center justify-center h-full min-h-[300px]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+    <p className="ml-3 mt-3 text-lg text-gray-700">Loading your quote requests...</p>
+  </div>
+);
+
+// --- Skeleton Loader for a Quote Item ---
+const QuoteCardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row justify-between items-start md:items-center animate-pulse border border-gray-200">
+    <div className="flex-1 mb-4 md:mb-0 space-y-2">
+      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="h-4 bg-gray-200 rounded w-full"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+    </div>
+    <div className="flex flex-col items-start md:items-end space-y-3">
+      <div className="h-6 bg-gray-200 rounded w-24"></div>
+      <div className="h-10 bg-gray-200 rounded w-32"></div>
+    </div>
+  </div>
+);
 
 export default function CustomerQuotesPage() {
   const [user, setUser] = useState(null);
@@ -23,6 +47,65 @@ export default function CustomerQuotesPage() {
     { name: "Request Quote", href: "/customer/request-quote" },
   ];
 
+  // Memoize fetchQuotes to prevent unnecessary re-creation
+  const fetchQuotes = useCallback(async (customerId) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/quotes?userId=${customerId}&role=customer`);
+      if (!res.ok) throw new Error("Failed to fetch quotes.");
+      const data = await res.json();
+
+      // OPTIMIZATION: Collect all unique provider and service IDs first
+      const uniqueProviderIds = [...new Set(data.quotes.map(quote => quote.providerId))];
+      const uniqueServiceIds = [...new Set(data.quotes.map(quote => quote.serviceId))];
+
+      // Fetch all unique providers in parallel
+      const providerPromises = uniqueProviderIds.map(id =>
+        fetch(`/api/providers/${id}`)
+          .then(res => res.ok ? res.json() : Promise.reject(`Failed provider ${id}`))
+          .catch(e => {
+            console.error(`Error fetching provider ${id}:`, e);
+            return { provider: { id, companyName: 'Unknown Provider' } }; // Return fallback
+          })
+      );
+
+      // Fetch all unique services in parallel
+      const servicePromises = uniqueServiceIds.map(id =>
+        fetch(`/api/services/${id}`)
+          .then(res => res.ok ? res.json() : Promise.reject(`Failed service ${id}`))
+          .catch(e => {
+            console.error(`Error fetching service ${id}:`, e);
+            return { service: { id, title: 'Unknown Service' } }; // Return fallback
+          })
+      );
+
+      // Wait for all provider and service fetches to complete
+      const [providersData, servicesData] = await Promise.all([
+        Promise.all(providerPromises),
+        Promise.all(servicePromises)
+      ]);
+
+      // Map IDs to their details for quick lookup
+      const providerMap = new Map(providersData.map(item => [item.provider.id, item.provider.companyName]));
+      const serviceMap = new Map(servicesData.map(item => [item.service.id, item.service.title]));
+
+      // Now, enrich quotes using the maps
+      const quotesWithDetails = data.quotes.map(quote => ({
+        ...quote,
+        providerName: providerMap.get(quote.providerId) || 'Unknown Provider',
+        serviceTitle: serviceMap.get(quote.serviceId) || 'Unknown Service',
+      }));
+
+      setQuotes(quotesWithDetails);
+      setError(null); // Clear any previous errors
+    } catch (err) {
+      console.error("Error fetching quotes:", err);
+      setError("Failed to load your quote requests. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Empty dependency array as it only needs customerId, which comes from useEffect
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -30,53 +113,12 @@ export default function CustomerQuotesPage() {
         return;
       }
       setUser(currentUser);
-      await fetchQuotes(currentUser.uid);
+      // Fetch quotes only after user is authenticated
+      fetchQuotes(currentUser.uid);
     });
 
     return () => unsubscribe();
-  }, [router]);
-
-  const fetchQuotes = async (customerId) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/quotes?userId=${customerId}&role=customer`);
-      if (!res.ok) throw new Error("Failed to fetch quotes.");
-      const data = await res.json();
-
-      // For each quote, fetch provider name and service title for display
-      const quotesWithDetails = await Promise.all(data.quotes.map(async (quote) => {
-        let providerName = 'Unknown Provider';
-        let serviceTitle = 'Unknown Service';
-
-        // Fetch provider company name
-        try {
-          const providerRes = await fetch(`/api/providers/${quote.providerId}`);
-          if (providerRes.ok) {
-            const providerData = await providerRes.json();
-            providerName = providerData.provider?.companyName || 'Unknown Provider';
-          }
-        } catch (e) { console.error("Error fetching provider for quote:", e); }
-
-        // Fetch service title
-        try {
-          const serviceRes = await fetch(`/api/services/${quote.serviceId}`);
-          if (serviceRes.ok) {
-            const serviceData = await serviceRes.json();
-            serviceTitle = serviceData.service?.title || 'Unknown Service';
-          }
-        } catch (e) { console.error("Error fetching service for quote:", e); }
-
-        return { ...quote, providerName, serviceTitle };
-      }));
-
-      setQuotes(quotesWithDetails);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching quotes:", err);
-      setError("Failed to load your quote requests. Please try again.");
-      setLoading(false);
-    }
-  };
+  }, [router, fetchQuotes]); // Add fetchQuotes to dependencies of useEffect
 
   const getStatusClasses = (status) => {
     switch (status) {
@@ -92,8 +134,12 @@ export default function CustomerQuotesPage() {
     return (
       <div className="flex flex-col min-h-screen">
         <Header navItems={customerNavItems} userType="customer" />
-        <main className="flex-1 pt-16 bg-gray-50 flex justify-center items-center">
-          <div className="loader"></div>
+        <main className="flex-1 pt-16 bg-gray-50 flex flex-col justify-center items-center min-h-[calc(100vh-120px)]"> {/* Adjusted min-h */}
+          <Loader />
+          {/* Optionally show skeleton cards below the main loader if desired */}
+          <div className="container mx-auto p-6 md:p-8 space-y-6 w-full max-w-4xl">
+            {[...Array(3)].map((_, i) => <QuoteCardSkeleton key={i} />)} {/* Show a few skeletons */}
+          </div>
         </main>
         <Footer />
       </div>
@@ -104,9 +150,16 @@ export default function CustomerQuotesPage() {
     return (
       <div className="flex flex-col min-h-screen">
         <Header navItems={customerNavItems} userType="customer" />
-        <main className="flex-1 pt-16 bg-gray-50 p-8 text-center text-red-600">
-          <p>{error}</p>
-          <button onClick={() => window.location.reload()} className="btn-primary mt-4">
+        <main className="flex-1 pt-16 bg-gray-50 p-8 text-center text-red-600 flex flex-col items-center justify-center min-h-[calc(100vh-120px)]">
+          <p className="text-xl mb-4">{error}</p>
+          <button onClick={() => {
+              setError(null); // Clear error before retry
+              if (user) { // If user exists, retry fetching everything
+                  fetchQuotes(user.uid);
+              } else { // If user doesn't exist, force re-auth check
+                  router.push("/signin");
+              }
+          }} className="btn-primary mt-4">
             Retry
           </button>
         </main>
@@ -118,19 +171,19 @@ export default function CustomerQuotesPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header navItems={customerNavItems} userType="customer" />
-      <main className="flex-1 pt-16 bg-gray-50 p-6 md:p-8">
+      <main className="flex-1 pt-16 bg-gray-50 p-6 md:p-8 min-h-[calc(100vh-120px)]"> {/* Ensure minimum height */}
         <div className="container mx-auto">
           <h1 className="text-3xl font-semibold text-gray-800 mb-8 text-center">My Quote Requests</h1>
 
           {quotes.length === 0 ? (
-            <div className="p-8 text-center text-gray-700 border-2 border-dashed border-gray-300 rounded-lg">
+            <div className="p-8 text-center text-gray-700 border-2 border-dashed border-gray-300 rounded-lg max-w-md mx-auto">
               <p className="text-lg mb-4">You haven't sent any quote requests yet.</p>
-              <Link href="/customer" className="text-blue-600 hover:underline">
+              <Link href="/customer" className="text-blue-600 hover:underline text-base font-medium">
                 Find providers and send your first quote!
               </Link>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-4xl mx-auto">
               {quotes.map((quote) => (
                 <div key={quote.id} className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row justify-between items-start md:items-center">
                   <div className="flex-1 mb-4 md:mb-0">

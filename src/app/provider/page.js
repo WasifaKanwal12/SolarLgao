@@ -2,12 +2,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// Removed auth and onAuthStateChanged as context handles it
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SalesChart from "@/components/charts/SalesChart";
 import CategoryDoughnutChart from "@/components/charts/CategoryDoughnutChart";
-// Removed Sidebar import
 import { useProviderData } from "@/app/context/ProviderDataContext"; // Import context hook
 
 export default function ProviderDashboard() {
@@ -31,7 +29,6 @@ export default function ProviderDashboard() {
 
   const fetchDashboardStats = async (uid) => {
     try {
-      // setLoading(true); // Loading is now managed by context for initial data
       const statsRes = await fetch(`/api/providers/dashboard-stats?providerId=${uid}`);
       if (!statsRes.ok) throw new Error("Failed to fetch dashboard stats.");
       const statsData = await statsRes.json();
@@ -46,9 +43,14 @@ export default function ProviderDashboard() {
     } catch (err) {
       console.error("Error fetching dashboard stats:", err);
       setDashboardError("Failed to load dashboard statistics. Please try again.");
-    } finally {
-      // setLoading(false); // No longer needed here
     }
+  };
+
+  // Function to format currency to PKR
+  const formatCurrencyPKR = (amount) => {
+    // You might want to use Intl.NumberFormat for more robust formatting
+    // For simplicity, we'll just prepend "PKR "
+    return `PKR ${amount.toLocaleString('en-PK')}`;
   };
 
   // Use loading and error from context for initial checks
@@ -168,7 +170,8 @@ export default function ProviderDashboard() {
               </svg>
               <h2 className="text-lg font-medium">Total Orders</h2>
             </div>
-            <p className="text-4xl font-bold mb-1">{dashboardStats.totalSales}</p>
+            {/* Changed to PKR */}
+            <p className="text-4xl font-bold mb-1">{formatCurrencyPKR(dashboardStats.totalSales)}</p>
             <p className="text-gray-400 text-sm">Completed</p>
             <div className="flex items-center text-sm mt-2">
               <span className="text-green-400 flex items-center mr-2">
@@ -230,7 +233,7 @@ export default function ProviderDashboard() {
           </svg>
         </div>
 
-        {/* Refunds Card */}
+        {/* Active Orders Card */}
         <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-between">
           <div>
             <div className="flex items-center mb-2">

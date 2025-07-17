@@ -138,7 +138,7 @@ export default function ProviderOrdersPage() {
               <div className="flex-1 mb-4 md:mb-0">
                 <h2 className="text-xl font-bold text-gray-900 mb-1">{order.serviceTitle}</h2>
                 <p className="text-gray-700 mb-1">Customer: <span className="font-semibold">{order.customerName}</span></p>
-                <p className="text-gray-500 text-sm mb-2">Offer Amount: <span className="font-semibold text-green-700">${order.customOfferDetails?.amount?.toFixed(2) || 'N/A'}</span></p>
+                <p className="text-gray-500 text-sm mb-2">Offer Amount: <span className="font-semibold text-green-700">PKR{order.customOfferDetails?.amount?.toFixed(2) || 'N/A'}</span></p>
                 <p className="text-gray-500 text-xs">Order Placed: {new Date(order.createdAt.seconds * 1000).toLocaleDateString()}</p>
                 {order.status === 'completed' && order.completedAt && (
                   <p className="text-gray-500 text-xs">Completed On: {new Date(order.completedAt.seconds * 1000).toLocaleDateString()}</p>

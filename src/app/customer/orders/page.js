@@ -1,13 +1,38 @@
 // src/app/customer/orders/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // Add useCallback
 import { auth } from "@/lib/config";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+
+// --- Loader Component (can be a shared component) ---
+const Loader = () => (
+  <div className="flex flex-col items-center justify-center h-full min-h-[300px]"> {/* Added min-h for vertical centering */}
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+    <p className="ml-3 mt-3 text-lg text-gray-700">Loading your orders...</p>
+  </div>
+);
+
+// --- Skeleton Loader for an Order Item ---
+const OrderCardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row justify-between items-start md:items-center animate-pulse border border-gray-200">
+    <div className="flex-1 mb-4 md:mb-0 space-y-2">
+      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+    </div>
+    <div className="flex flex-col items-start md:items-end space-y-3">
+      <div className="h-6 bg-gray-200 rounded w-24"></div>
+      <div className="h-10 bg-gray-200 rounded w-32"></div>
+    </div>
+  </div>
+);
+
 
 export default function CustomerOrdersPage() {
   const [user, setUser] = useState(null);
@@ -23,6 +48,65 @@ export default function CustomerOrdersPage() {
     { name: "Request Quote", href: "/customer/request-quote" },
   ];
 
+  // Memoize fetchOrders to prevent unnecessary re-creation
+  const fetchOrders = useCallback(async (customerId) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/orders?userId=${customerId}&role=customer`);
+      if (!res.ok) throw new Error("Failed to fetch orders.");
+      const data = await res.json();
+
+      // OPTIMIZATION: Collect all unique provider and service IDs first
+      const uniqueProviderIds = [...new Set(data.orders.map(order => order.providerId))];
+      const uniqueServiceIds = [...new Set(data.orders.map(order => order.serviceId))];
+
+      // Fetch all unique providers in parallel
+      const providerPromises = uniqueProviderIds.map(id =>
+        fetch(`/api/providers/${id}`)
+          .then(res => res.ok ? res.json() : Promise.reject(`Failed provider ${id}`))
+          .catch(e => {
+            console.error(`Error fetching provider ${id}:`, e);
+            return { provider: { id, companyName: 'Unknown Provider' } }; // Return fallback
+          })
+      );
+
+      // Fetch all unique services in parallel
+      const servicePromises = uniqueServiceIds.map(id =>
+        fetch(`/api/services/${id}`)
+          .then(res => res.ok ? res.json() : Promise.reject(`Failed service ${id}`))
+          .catch(e => {
+            console.error(`Error fetching service ${id}:`, e);
+            return { service: { id, title: 'Unknown Service' } }; // Return fallback
+          })
+      );
+
+      // Wait for all provider and service fetches to complete
+      const [providersData, servicesData] = await Promise.all([
+        Promise.all(providerPromises),
+        Promise.all(servicePromises)
+      ]);
+
+      // Map IDs to their details for quick lookup
+      const providerMap = new Map(providersData.map(item => [item.provider.id, item.provider.companyName]));
+      const serviceMap = new Map(servicesData.map(item => [item.service.id, item.service.title]));
+
+      // Now, enrich orders using the maps
+      const ordersWithDetails = data.orders.map(order => ({
+        ...order,
+        providerName: providerMap.get(order.providerId) || 'Unknown Provider',
+        serviceTitle: serviceMap.get(order.serviceId) || 'Unknown Service',
+      }));
+
+      setOrders(ordersWithDetails);
+      setError(null); // Clear any previous errors
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+      setError("Failed to load your orders. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Empty dependency array as it only needs customerId, which comes from useEffect
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -30,69 +114,35 @@ export default function CustomerOrdersPage() {
         return;
       }
       setUser(currentUser);
-      await fetchOrders(currentUser.uid);
+      // Fetch orders only after user is authenticated
+      fetchOrders(currentUser.uid);
     });
 
     return () => unsubscribe();
-  }, [router]);
-
-  const fetchOrders = async (customerId) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/orders?userId=${customerId}&role=customer`);
-      if (!res.ok) throw new Error("Failed to fetch orders.");
-      const data = await res.json();
-
-      const ordersWithDetails = await Promise.all(data.orders.map(async (order) => {
-        let providerName = 'Unknown Provider';
-        let serviceTitle = 'Unknown Service';
-
-        // Fetch provider company name
-        try {
-          const providerRes = await fetch(`/api/providers/${order.providerId}`);
-          if (providerRes.ok) {
-            const providerData = await providerRes.json();
-            providerName = providerData.provider?.companyName || 'Unknown Provider';
-          }
-        } catch (e) { console.error("Error fetching provider for order:", e); }
-
-        // Fetch service title
-        try {
-          const serviceRes = await fetch(`/api/services/${order.serviceId}`);
-          if (serviceRes.ok) {
-            const serviceData = await serviceRes.json();
-            serviceTitle = serviceData.service?.title || 'Unknown Service';
-          }
-        } catch (e) { console.error("Error fetching service for order:", e); }
-
-        return { ...order, providerName, serviceTitle };
-      }));
-
-      setOrders(ordersWithDetails);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-      setError("Failed to load your orders. Please try again.");
-      setLoading(false);
-    }
-  };
+  }, [router, fetchOrders]); // Add fetchOrders to dependencies of useEffect
 
   const handleCompleteOrder = async (orderId) => {
     if (!confirm("Are you sure you want to mark this order as completed? This will trigger payment release.")) return;
 
     try {
+      setLoading(true); // Show loading spinner during action
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'completed', paymentStatus: 'released_to_provider' }) // Assuming payment logic
+        body: JSON.stringify({ status: 'completed', paymentStatus: 'released_to_provider' })
       });
 
       if (!res.ok) throw new Error('Failed to complete order.');
       alert('Order marked as completed! Payment will be released to the provider.');
-      fetchOrders(user.uid); // Refresh orders
+      if (user) { // Ensure user is not null before refetching
+          fetchOrders(user.uid); // Refresh orders
+      } else {
+          router.reload(); // Fallback if user somehow becomes null
+      }
     } catch (err) {
       console.error("Error completing order:", err);
       alert("Failed to complete order: " + err.message);
+      setLoading(false); // Hide loading on error
     }
   };
 
@@ -114,8 +164,12 @@ export default function CustomerOrdersPage() {
     return (
       <div className="flex flex-col min-h-screen">
         <Header navItems={customerNavItems} userType="customer" />
-        <main className="flex-1 pt-16 bg-gray-50 flex justify-center items-center">
-          <div className="loader"></div>
+        <main className="flex-1 pt-16 bg-gray-50 flex flex-col justify-center items-center min-h-[calc(100vh-120px)]"> {/* Adjusted min-h */}
+          <Loader />
+          {/* Optionally show skeleton cards below the main loader if desired */}
+           <div className="container mx-auto p-6 md:p-8 space-y-6 w-full max-w-4xl">
+             {[...Array(3)].map((_, i) => <OrderCardSkeleton key={i} />)} {/* Show a few skeletons */}
+           </div>
         </main>
         <Footer />
       </div>
@@ -126,9 +180,16 @@ export default function CustomerOrdersPage() {
     return (
       <div className="flex flex-col min-h-screen">
         <Header navItems={customerNavItems} userType="customer" />
-        <main className="flex-1 pt-16 bg-gray-50 p-8 text-center text-red-600">
-          <p>{error}</p>
-          <button onClick={() => window.location.reload()} className="btn-primary mt-4">
+        <main className="flex-1 pt-16 bg-gray-50 p-8 text-center text-red-600 flex flex-col items-center justify-center min-h-[calc(100vh-120px)]">
+          <p className="text-xl mb-4">{error}</p>
+          <button onClick={() => {
+              setError(null); // Clear error before retry
+              if (user) { // If user exists, retry fetching everything
+                  fetchOrders(user.uid);
+              } else { // If user doesn't exist, force re-auth check
+                  router.push("/signin");
+              }
+          }} className="btn-primary mt-4">
             Retry
           </button>
         </main>
@@ -140,19 +201,19 @@ export default function CustomerOrdersPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header navItems={customerNavItems} userType="customer" />
-      <main className="flex-1 pt-16 bg-gray-50 p-6 md:p-8">
+      <main className="flex-1 pt-16 bg-gray-50 p-6 md:p-8 min-h-[calc(100vh-120px)]"> {/* Ensure minimum height */}
         <div className="container mx-auto">
           <h1 className="text-3xl font-semibold text-gray-800 mb-8 text-center">My Orders</h1>
 
           {orders.length === 0 ? (
-            <div className="p-8 text-center text-gray-700 border-2 border-dashed border-gray-300 rounded-lg">
+            <div className="p-8 text-center text-gray-700 border-2 border-dashed border-gray-300 rounded-lg max-w-md mx-auto">
               <p className="text-lg mb-4">You don't have any active or completed orders yet.</p>
-              <Link href="/customer" className="text-blue-600 hover:underline">
+              <Link href="/customer" className="text-blue-600 hover:underline text-base font-medium">
                 Start by requesting a quote from a service provider!
               </Link>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-4xl mx-auto">
               {orders.map((order) => (
                 <div key={order.id} className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row justify-between items-start md:items-center">
                   <div className="flex-1 mb-4 md:mb-0">

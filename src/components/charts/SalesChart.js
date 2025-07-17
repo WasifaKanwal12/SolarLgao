@@ -55,7 +55,8 @@ export default function SalesChart({ data }) {
               label += ': ';
             }
             if (context.parsed.y !== null) {
-              label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+              // This is already correctly set to PKR, no change needed here.
+              label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'PKR' }).format(context.parsed.y);
             }
             return label;
           }
@@ -75,7 +76,8 @@ export default function SalesChart({ data }) {
         },
         ticks: {
           callback: function(value) {
-            return '$' + value;
+            // Changed from '$' + value to 'PKR ' + value
+            return 'PKR ' + value;
           }
         }
       },

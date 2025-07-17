@@ -104,7 +104,7 @@ export default function ProviderServicesPage() {
                 <p className="text-gray-600 text-sm mb-3 line-clamp-3">{service.description}</p>
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-lg font-bold text-green-700">
-                    ${service.priceMin} {service.priceMax ? `- $${service.priceMax}` : ''}
+                    Pkr{service.priceMin} {service.priceMax ? `- Pkr${service.priceMax}` : ''}
                   </span>
                   <span className={`text-sm px-3 py-1 rounded-full ${service.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                     {service.status}
