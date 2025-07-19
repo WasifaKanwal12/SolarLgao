@@ -106,7 +106,7 @@ export default function Home() {
       <section className="relative h-[600px]">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <Image src="/solar-panel.jpg" alt="Solar Panel Background" fill style={{ objectFit: "cover" }} priority />
+          <Image src="/homesection2.jpeg" alt="Solar Panel Background" fill style={{ objectFit: "cover" }} priority />
           <div className="absolute inset-0 bg-black bg-opacity-50"></div>
         </div>
 

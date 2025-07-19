@@ -264,7 +264,7 @@ export default function RecommendationPage() {
     <>
       <Header />
       {/* Background image directly from public folder */}
-      <div className="min-h-screen bg-cover bg-center" style={{ backgroundImage: "url('/solar-panel.jpg')" }}>
+      <div className="min-h-screen bg-cover bg-center" style={{ backgroundImage: "url('/homesection2.jpeg')" }}>
         <div className="container mx-auto px-4 py-8 flex justify-center items-center">
           <div className="max-w-4xl w-full bg-white rounded-lg shadow-md p-6 bg-opacity-90">
             <h1 className="text-3xl font-bold text-center mb-8 text-green-700">Solar System Recommendation</h1>

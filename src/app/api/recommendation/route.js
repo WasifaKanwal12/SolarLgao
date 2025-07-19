@@ -7,7 +7,7 @@ export async function POST(request) {
   try {
     // Correct the FastAPI endpoint URL to include the protocol
     // Double-check this URL: It should be a publicly accessible endpoint.
-    const fastApiUrl = 'https://solar-lgao-api-c2hygdgah7e2f3b4.centralindia-01.azurewebsites.net/recommend';
+    const fastApiUrl = 'https://solar-lgao-cgfwewawh6a5fnem.southindia-01.azurewebsites.net/recommend';
 
     const fastApiResponse = await fetch(fastApiUrl, {
       method: 'POST',
