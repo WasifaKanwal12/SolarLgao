@@ -273,7 +273,7 @@ export default function RecommendationPage() {
             <div className="flex justify-between mb-8">
               {progressSteps.map((s) => (
                 <div key={s} className={`flex-1 text-center ${s <= step ? 'text-green-600 font-bold' : 'text-gray-400'}`}>
-                  Step {s}
+                   {s}
                   {s <= step && (
                     <div className="h-1 bg-green-600 mt-2 rounded-full mx-auto" style={{ width: '50%' }}></div>
                   )}
@@ -400,39 +400,38 @@ export default function RecommendationPage() {
             )}
 
 
-            {/* Step 4: Monthly Electricity Consumption (Conditional) */}
-            {step === 4 && inputMethod === 'kwh' && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4 text-black">Enter your average monthly electricity consumption.</h2>
-                <p className="text-gray-700 mb-4">Please provide your average monthly electricity consumption in kWh.</p>
-                <input
-                  name="electricity_kwh_per_month"
-                  placeholder="Monthly Electricity Consumption (kWh)"
-                  type="number"
-                  value={formData.electricity_kwh_per_month}
-                  onChange={handleChange}
-                  className="w-full border px-4 py-2 rounded text-black"
-                  required
-                />
-                <div className="flex justify-between mt-6">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="submit"
-                    onClick={handleSubmit}
-                    disabled={isSubmitDisabled}
-                    className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-green-200"
-                  >
-                    {isLoading ? 'Calculating...' : 'Get Recommendations'}
-                  </button>
-                </div>
-              </div>
-            )}
+          {step === 4 && inputMethod === 'kwh' && (
+  <div>
+    <h2 className="text-xl font-semibold mb-4 text-black">Enter your average monthly electricity consumption.</h2>
+    <p className="text-gray-700 mb-4">Please provide your average monthly electricity consumption in kWh.</p>
+    <input
+      name="electricity_kwh_per_month"
+      placeholder="Monthly Electricity Consumption (kWh)"
+      type="number"
+      value={formData.electricity_kwh_per_month}
+      onChange={handleChange}
+      className="w-full border px-4 py-2 rounded text-black"
+      required
+    />
+    <div className="flex flex-col sm:flex-row justify-between mt-6 **gap-4**">
+      <button
+        type="button"
+        onClick={prevStep}
+        className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400 **mb-2 sm:mb-0**"
+      >
+        Previous
+      </button>
+      <button
+        type="submit"
+        onClick={handleSubmit}
+        disabled={isSubmitDisabled}
+        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-green-200"
+      >
+        {isLoading ? 'Calculating...' : 'Get Recommendations'}
+      </button>
+    </div>
+  </div>
+)}
 
             {/* Step 5: Appliances (Conditional) */}
             {step === 5 && inputMethod === 'appliances' && (
