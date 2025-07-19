@@ -6,8 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 // Define a list of common appliances with average wattage (for display in dropdown)
-
-  const commonAppliances = [
+const commonAppliances = [
   {name: "LED Bulb", watts: 10},
   {name: "Tube Light", watts: 40},
   {name: "Ceiling Fan", watts: 70},
@@ -42,7 +41,7 @@ import Footer from '@/components/Footer';
 export default function RecommendationPage() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    systemType: '',
+    systemType: '', // Will store 'On-Grid Solar', 'Hybrid Solar', 'Off-Grid Solar'
     location: '',
     electricity_kwh_per_month: '',
     appliances: [], // For selectable appliances from the list
@@ -117,18 +116,18 @@ export default function RecommendationPage() {
   };
 
   const prevStep = () => {
-  if (step === 6) { // If currently on the recommendations step
-    if (inputMethod === 'kwh') {
-      setStep(4); // Go back to KWH input if that was the method
-    } else { // inputMethod === 'appliances'
-      setStep(5); // Go back to appliances input if that was the method
+    if (step === 6) { // If currently on the recommendations step
+      if (inputMethod === 'kwh') {
+        setStep(4); // Go back to KWH input if that was the method
+      } else { // inputMethod === 'appliances'
+        setStep(5); // Go back to appliances input if that was the method
+      }
+    } else if (step === 5 || step === 4) { // If on KWH input or Appliances input
+      setStep(3); // Always go back to input method selection (Step 3)
+    } else { // For all other steps (1, 2, 3)
+      setStep((prev) => prev - 1);
     }
-  } else if (step === 5 || step === 4) { // If on KWH input or Appliances input
-    setStep(3); // Always go back to input method selection (Step 3)
-  } else { // For all other steps (1, 2, 3)
-    setStep((prev) => prev - 1);
-  }
-};
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -137,21 +136,39 @@ export default function RecommendationPage() {
     setRecommendations([]);
 
     try {
+      // Map frontend systemType to backend expected values
+      let backendSystemType;
+      if (formData.systemType === 'On-Grid Solar') {
+        backendSystemType = 'Grid-Tie';
+      } else if (formData.systemType === 'Hybrid Solar') {
+        backendSystemType = 'Grid-Tie + Batteries';
+      } else if (formData.systemType === 'Off-Grid Solar') {
+        backendSystemType = 'Off-Grid';
+      } else {
+        throw new Error("Invalid system type selected.");
+      }
+
       let payload = {
         location: formData.location,
-        system_type: formData.systemType,
+        system_type: backendSystemType, // Use the mapped system type
       };
 
       if (inputMethod === 'kwh') {
-        payload.electricity_kwh_per_month = formData.electricity_kwh_per_month;
-        payload.appliances = []; // Ensure appliances array is empty if not used
+        payload.electricity_kwh_per_month = parseInt(formData.electricity_kwh_per_month);
+        payload.appliances = null; // Ensure appliances array is null if not used
       } else { // inputMethod === 'appliances'
         const allAppliances = [
           ...formData.appliances.filter(app => app.name && app.quantity && app.hoursPerDay),
           ...customAppliances.filter(app => app.name && app.quantity && app.hoursPerDay)
-        ];
+        ].map(app => ({
+          name: app.name,
+          quantity: parseInt(app.quantity),
+          hours: parseFloat(app.hoursPerDay)
+          // wattage field is optional, so we omit it if not explicitly set by user.
+          // The backend will handle its resolution.
+        }));
         payload.appliances = allAppliances;
-        payload.electricity_kwh_per_month = ''; // Ensure this is empty if not used
+        payload.electricity_kwh_per_month = null; // Ensure this is null if not used
       }
 
       const response = await fetch('/api/recommendation', {
@@ -166,10 +183,10 @@ export default function RecommendationPage() {
       }
 
       const data = await response.json();
-      if (Array.isArray(data) && data.every(item => item && typeof item.metrics !== 'undefined')) {
-        setRecommendations(data);
-      } else if (data && typeof data.metrics !== 'undefined') {
-        setRecommendations([data]);
+      // The backend now always returns a single object with a 'metrics' array,
+      // so we can directly set it.
+      if (data && Array.isArray(data.metrics)) {
+        setRecommendations([data]); // Wrap it in an array to maintain consistency with previous state usage
       } else {
         throw new Error("Received unexpected data format from the recommendation API.");
       }
@@ -192,19 +209,14 @@ export default function RecommendationPage() {
     const headers = ['Metric', 'Value'];
     const rows = [];
     transformedRecommendations.forEach((rec) => {
-      // Add the dummy values for Daily Consumption and Peak Sun Hours first
-      rows.push(['Daily Consumption', `${rec.daily_consumption || 'XXX'} ${rec.daily_consumption_unit || 'kWh/day'}`]);
-      rows.push(['Peak Sun Hours', `${rec.solar_hours || 'YYY'} ${rec.solar_hours_unit || 'hours/day'}`]);
-
-      Object.entries(rec).forEach(([key, value]) => {
-        // Skip unit keys, daily_consumption, solar_hours, and system_type
-        if (!key.endsWith('_unit') && key !== 'daily_consumption' && key !== 'solar_hours' && key !== 'system_type') {
-          const unitKey = `${key}_unit`;
-          const displayValue = rec[unitKey] ? `${value} ${rec[unitKey]}` : value;
-          rows.push([key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase()), displayValue]);
+      Object.entries(rec).forEach(([key, metric]) => {
+        // Only include actual metrics with description and unit
+        if (metric && typeof metric.value !== 'undefined' && metric.description && metric.unit !== undefined) {
+          const displayValue = metric.unit ? `${metric.value} ${metric.unit}` : metric.value;
+          rows.push([metric.description, displayValue]);
         }
       });
-      // Add a separator for multiple recommendations
+      // Add a separator for multiple recommendations (though currently only one is expected)
       rows.push(['---', '---']);
     });
     // Remove the last separator
@@ -228,31 +240,31 @@ export default function RecommendationPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Transform recommendations for display, extracting description and unit
   const transformedRecommendations = recommendations.map(rec => {
-    const result = {
-      daily_consumption: '25', // Dummy value
-      daily_consumption_unit: 'kWh/day', // Dummy unit
-      solar_hours: '5', // Dummy value
-      solar_hours_unit: 'hours/day', // Dummy unit
-    };
+    const result = {};
     if (rec && Array.isArray(rec.metrics)) {
       rec.metrics.forEach(metric => {
-        // Exclude system_type here if you don't want it in the transformed data at all for the table
-        if (metric.name !== 'system_type') {
-          result[metric.name] = metric.value;
-          result[`${metric.name}_unit`] = metric.unit;
-        }
+        // Store the metric object with its description and unit
+        result[metric.name] = {
+          value: metric.value,
+          unit: metric.unit,
+          description: metric.description
+        };
       });
     }
     return result;
   });
+
 
   // Determine if the submit button should be disabled
   const isSubmitDisabled = isLoading || (
     (inputMethod === 'appliances' &&
       formData.appliances.filter(app => app.name && app.quantity && app.hoursPerDay).length === 0 &&
       customAppliances.filter(app => app.name && app.quantity && app.hoursPerDay).length === 0) ||
-    (inputMethod === 'kwh' && !formData.electricity_kwh_per_month)
+    (inputMethod === 'kwh' && !formData.electricity_kwh_per_month) ||
+    !formData.location || // Location must be filled for both methods
+    !formData.systemType // System type must be selected
   );
 
 
@@ -399,39 +411,40 @@ export default function RecommendationPage() {
               </div>
             )}
 
+            {/* Step 4: Monthly Electricity Consumption (Conditional) */}
+            {step === 4 && inputMethod === 'kwh' && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 text-black">Enter your average monthly electricity consumption.</h2>
+                <p className="text-gray-700 mb-4">Please provide your average monthly electricity consumption in kWh.</p>
+                <input
+                  name="electricity_kwh_per_month"
+                  placeholder="Monthly Electricity Consumption (kWh)"
+                  type="number"
+                  value={formData.electricity_kwh_per_month}
+                  onChange={handleChange}
+                  className="w-full border px-4 py-2 rounded text-black"
+                  required
+                />
+                <div className="flex flex-col sm:flex-row justify-between mt-6 sm:gap-4">
+                  <button
+                    type="button"
+                    onClick={prevStep}
+                    className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400 mb-4 sm:mb-0"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    disabled={isSubmitDisabled}
+                    className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-green-200"
+                  >
+                    {isLoading ? 'Calculating...' : 'Get Recommendations'}
+                  </button>
+                </div>
+              </div>
+            )}
 
-          {step === 4 && inputMethod === 'kwh' && (
-  <div>
-    <h2 className="text-xl font-semibold mb-4 text-black">Enter your average monthly electricity consumption.</h2>
-    <p className="text-gray-700 mb-4">Please provide your average monthly electricity consumption in kWh.</p>
-    <input
-      name="electricity_kwh_per_month"
-      placeholder="Monthly Electricity Consumption (kWh)"
-      type="number"
-      value={formData.electricity_kwh_per_month}
-      onChange={handleChange}
-      className="w-full border px-4 py-2 rounded text-black"
-      required
-    />
-    <div className="flex flex-col sm:flex-row justify-between mt-6 **gap-4**">
-      <button
-        type="button"
-        onClick={prevStep}
-        className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400 **mb-2 sm:mb-0**"
-      >
-        Previous
-      </button>
-      <button
-        type="submit"
-        onClick={handleSubmit}
-        disabled={isSubmitDisabled}
-        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-green-200"
-      >
-        {isLoading ? 'Calculating...' : 'Get Recommendations'}
-      </button>
-    </div>
-  </div>
-)}
 
             {/* Step 5: Appliances (Conditional) */}
             {step === 5 && inputMethod === 'appliances' && (
@@ -453,6 +466,7 @@ export default function RecommendationPage() {
                           onChange={(e) => handleApplianceChange(index, e)}
                           className="w-full border px-2 py-1 rounded text-black"
                         >
+                          <option value="">Select an appliance</option> {/* Added a default empty option */}
                           {commonAppliances.map((item, idx) => (
                             <option key={idx} value={item.name}>
                               {item.name} {item.watts > 0 ? `(${item.watts}W avg)` : ''}
@@ -489,7 +503,7 @@ export default function RecommendationPage() {
                           type="button"
                           onClick={() => removeAppliance(index)}
                           className="text-red-500 hover:text-red-700 disabled:text-gray-300 col-span-1 flex justify-center items-center" // Take 1 col, center content
-                          disabled={formData.appliances.length === 0}
+                          disabled={formData.appliances.length === 0 && customAppliances.length === 1} // Disable if no predefined and only one custom
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path>
@@ -551,7 +565,7 @@ export default function RecommendationPage() {
                           type="button"
                           onClick={() => removeCustomAppliance(index)}
                           className="text-red-500 hover:text-red-700 disabled:text-gray-300 col-span-1 flex justify-center items-center" // Take 1 col, center content
-                          disabled={customAppliances.length === 1}
+                          disabled={customAppliances.length === 1 && formData.appliances.length === 0} // Disable if only one custom and no predefined
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path>
@@ -619,36 +633,30 @@ export default function RecommendationPage() {
                           )}
                           <table className="w-full table-auto border min-w-full">
                             <tbody>
-                              {/* Always show Daily Consumption and Peak Sun Hours first */}
-                              <tr className="border-b">
-                                <td className="p-2 text-left font-semibold text-black">Daily Consumption</td>
-                                <td className="p-2 text-right text-black">
-                                  {rec.daily_consumption} {rec.daily_consumption_unit}
-                                </td>
-                              </tr>
-                              <tr className="border-b">
-                                <td className="p-2 text-left font-semibold text-black">Peak Sun Hours</td>
-                                <td className="p-2 text-right text-black">
-                                  {rec.solar_hours} {rec.solar_hours_unit}
-                                </td>
-                              </tr>
-                              {Object.entries(rec).map(([key, value]) => {
-                                // Skip unit keys, and the newly added dummy values, and system_type
-                                if (key.endsWith('_unit') || key === 'daily_consumption' || key === 'solar_hours' || key === 'system_type') {
-                                  return null;
+                              {/* Display all metrics from the backend */}
+                              {Object.entries(rec).map(([key, metric]) => {
+                                // Only display if the metric object has a value, description, and unit
+                                if (metric && typeof metric.value !== 'undefined' && metric.description && metric.unit !== undefined) {
+                                  // Determine if battery storage should be shown
+                                  const showBattery = (key === 'battery_storage' && (formData.systemType === 'Hybrid Solar' || formData.systemType === 'Off-Grid Solar'));
+                                  // Always show other metrics
+                                  const showOtherMetric = (key !== 'battery_storage');
+
+                                  if (showBattery || showOtherMetric) {
+                                    const displayValue = metric.unit ? `${metric.value} ${metric.unit}` : metric.value;
+                                    return (
+                                      <tr key={key} className="border-b last:border-b-0">
+                                        <td className="p-2 text-left font-semibold text-black">
+                                          {metric.description}
+                                        </td>
+                                        <td className="p-2 text-right text-black">
+                                          {displayValue}
+                                        </td>
+                                      </tr>
+                                    );
+                                  }
                                 }
-                                const unitKey = `${key}_unit`;
-                                const displayValue = rec[unitKey] ? `${value} ${rec[unitKey]}` : value;
-                                return (
-                                  <tr key={key} className="border-b last:border-b-0">
-                                    <td className="p-2 text-left font-semibold text-black capitalize">
-                                      {key.replace(/_/g, ' ')}
-                                    </td>
-                                    <td className="p-2 text-right text-black">
-                                      {displayValue}
-                                    </td>
-                                  </tr>
-                                );
+                                return null;
                               })}
                             </tbody>
                           </table>
