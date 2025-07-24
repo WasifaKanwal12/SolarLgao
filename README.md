@@ -1,7 +1,5 @@
-Here's the complete documentation in a single markup block that you can copy:
 
-```markdown
-# SolarWebApp Documentation
+# SolarWebApp 
 
 ## Getting Started
 
@@ -15,15 +13,15 @@ Here's the complete documentation in a single markup block that you can copy:
 ### Installation:
 
 1. Clone the repository:
-```bash
+
 git clone https://github.com/WasifaKanwal12/SolarLgao.git
 cd solar-energy-app
-```
+
 
 2. Install dependencies:
-```bash
+
 npm install
-```
+
 
 3. Set up environment variables:
 Create a `.env` file in the root directory and add:
