@@ -23,19 +23,19 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/" className="hover:text-primary-green transition-colors">
+            <Link href="/" className="text-black hover:text-primary-green transition-colors"> {/* Added text-black */}
               Home
             </Link>
-            <Link href="/#about" className="hover:text-primary-green transition-colors">
+            <Link href="/#about" className="text-black hover:text-primary-green transition-colors"> {/* Added text-black */}
               About
             </Link>
-            <Link href="/#services" className="hover:text-primary-green transition-colors">
+            <Link href="/#services" className="text-black hover:text-primary-green transition-colors"> {/* Added text-black */}
               Services
             </Link>
-            <Link href="/#clients" className="hover:text-primary-green transition-colors">
+            <Link href="/#clients" className="text-black hover:text-primary-green transition-colors"> {/* Added text-black */}
               Clients
             </Link>
-            <Link href="/#contact" className="hover:text-primary-green transition-colors">
+            <Link href="/#contact" className="text-black hover:text-primary-green transition-colors"> {/* Added text-black */}
               Contact
             </Link>
           </nav>
@@ -81,6 +81,9 @@ export default function Header() {
               <Link href="/#contact" className="hover:text-primary-green transition-colors text-black" onClick={toggleMenu}>
                 Contact
               </Link>
+              {/* These links already have text-primary-green which will override text-black.
+                  If you want them black unless hovered, you'd need to adjust their base class.
+                  For now, leaving as is since they are styled differently. */}
               <Link href="/signup" className="text-primary-green hover:underline" onClick={toggleMenu}>
                 Become a Seller
               </Link>
@@ -94,4 +97,3 @@ export default function Header() {
     </header>
   )
 }
-

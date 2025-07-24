@@ -19,14 +19,14 @@ export async function POST(request) {
     lastName,
     userType,
     companyName,
-    registrationNumber,
+    registrationNumber, // This is now optional
     contactNumber,
     companyAddress,
     servicesOffered,
     serviceLocations,
     description,
     website,
-    certificateBase64,
+    certificateBase64, // This is now optional
     profileImageBase64,
   } = await request.json(); // Access request body using await request.json()
 
@@ -51,14 +51,14 @@ export async function POST(request) {
       const providerData = {
         uid, // Link to the user's UID
         companyName,
-        registrationNumber,
+        registrationNumber: registrationNumber || null, // Ensure it's null if undefined or empty
         contactNumber,
         companyAddress,
         servicesOffered: servicesOffered || [], // Ensure it's an array, even if empty
         serviceLocations: serviceLocations || [], // Ensure it's an array, even if empty
         description: description || null, // Ensure it's null if undefined
         website: website || null, // Ensure it's null if undefined
-        certificateUrl: certificateBase64 || null, // Storing base64 string
+        certificateUrl: certificateBase64 || null, // Storing base64 string, now optional
         profileImageUrl: profileImageBase64 || null, // Storing base64 string
         status: 'pending', // Default status for new providers awaiting admin approval
         rating: 0, // Initialize rating
@@ -86,7 +86,7 @@ export async function POST(request) {
   }
 }
 
-// If you need to support other HTTP methods for this route, define them similarly:
+
 /*
 export async function GET(request) {
   // Logic for GET requests

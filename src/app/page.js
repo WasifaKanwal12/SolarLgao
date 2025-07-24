@@ -138,7 +138,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="relative h-[400px] rounded-lg overflow-hidden">
               <Image
-                src="/about-image.JPG"
+                src="/about-image.JPEG"
                 alt="Solar Energy"
                 fill
                 style={{ objectFit: "cover" }}

@@ -224,7 +224,6 @@ export default function CustomerChatPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header navItems={customerNavItems} userType="customer" />
       <main className="flex-1 pt-16 bg-gray-50 flex flex-col py-6">
         <ChatInterface
           user={user}
@@ -239,7 +238,7 @@ export default function CustomerChatPage() {
           // No additionalChatActions for customer in this scenario
         />
       </main>
-      <Footer />
+   
     </div>
   );
 }

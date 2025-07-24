@@ -86,7 +86,6 @@ export default function SignUp() {
         }
         break;
       case "companyName":
-      case "registrationNumber":
       case "contactNumber":
       case "companyAddress":
       case "servicesOffered":
@@ -95,6 +94,7 @@ export default function SignUp() {
           message = "This company detail is required.";
         }
         break;
+      // registrationNumber and certificateFile are no longer required for validation here
       default:
         break;
     }
@@ -128,11 +128,12 @@ export default function SignUp() {
         if (fileType === 'profileImage') setProfileImageFile(file);
       }
     } else {
+      // If no file is selected, clear the file and any previous error for that file type
       if (fileType === 'certificate') setCertificateFile(null);
       if (fileType === 'profileImage') setProfileImageFile(null);
     }
     setFieldErrors((prev) => ({ ...prev, [`${fileType}File`]: fileErrorMessage }));
-    setError(fileErrorMessage);
+    setError(fileErrorMessage); // General error for file
   };
 
   const validateAllFields = (data) => {
@@ -170,13 +171,20 @@ export default function SignUp() {
 
     if (data.userType === "provider") {
       if (data.companyName.trim() === "") errors.companyName = "Company Name is required.";
-      if (data.registrationNumber.trim() === "") errors.registrationNumber = "Registration Number is required.";
+      // registrationNumber is now optional, no validation here
       if (data.contactNumber.trim() === "") errors.contactNumber = "Contact Number is required.";
       if (data.companyAddress.trim() === "") errors.companyAddress = "Company Address is required.";
       if (data.servicesOffered.trim() === "") errors.servicesOffered = "Services Offered are required.";
       if (data.serviceLocations.trim() === "") errors.serviceLocations = "Service Locations are required.";
-      if (!certificateFile) errors.certificateFile = "Certificate image is required.";
-      // Profile image is optional, so no validation here for it
+      // certificateFile is now optional, no validation here for it being present
+
+      // If a certificate file is provided but has an error (e.g., wrong type/size), keep that error
+      if (certificateFile && fieldErrors.certificateFile) {
+        errors.certificateFile = fieldErrors.certificateFile;
+      }
+      if (profileImageFile && fieldErrors.profileImageFile) {
+        errors.profileImageFile = fieldErrors.profileImageFile;
+      }
     }
 
     return errors;
@@ -191,7 +199,16 @@ export default function SignUp() {
     const currentErrors = validateAllFields(formData);
     if (Object.keys(currentErrors).length > 0) {
       setFieldErrors(currentErrors);
-      setError("Please correct the highlighted fields and fill all required information.");
+      // Only set a general error message if there are actual validation errors, not just optional file warnings
+      const hasRequiredFieldErrors = Object.keys(currentErrors).some(key =>
+        !(key === 'certificateFile' || key === 'profileImageFile' || key === 'registrationNumber')
+      );
+      if (hasRequiredFieldErrors) {
+        setError("Please correct the highlighted fields and fill all required information.");
+      } else if (currentErrors.certificateFile || currentErrors.profileImageFile) {
+        // If only file errors, display a specific message
+        setError("Please correct file upload issues (e.g., file type or size).");
+      }
       setLoading(false);
       return;
     }
@@ -226,14 +243,14 @@ export default function SignUp() {
           lastName: formData.lastName,
           userType: formData.userType,
           companyName: formData.userType === "provider" ? formData.companyName : undefined,
-          registrationNumber: formData.userType === "provider" ? formData.registrationNumber : undefined,
+          registrationNumber: formData.userType === "provider" ? formData.registrationNumber : undefined, // Now optional
           contactNumber: formData.userType === "provider" ? formData.contactNumber : undefined,
           companyAddress: formData.userType === "provider" ? formData.companyAddress : undefined,
           servicesOffered: formData.userType === "provider" ? formData.servicesOffered.split(',').map(s => s.trim()) : undefined,
           serviceLocations: formData.userType === "provider" ? formData.serviceLocations.split(',').map(l => l.trim()) : undefined,
           description: formData.userType === "provider" ? formData.description : undefined, // Include description
           website: formData.userType === "provider" ? formData.website : undefined, // Include website
-          certificateBase64: formData.userType === "provider" ? certificateBase64 : undefined,
+          certificateBase64: formData.userType === "provider" ? certificateBase64 : undefined, // Now optional
           profileImageBase64: formData.userType === "provider" ? profileImageBase64 : undefined, // Include profile image base64
         }),
       });
@@ -294,7 +311,7 @@ export default function SignUp() {
                     value={formData.firstName}
                     onChange={handleChange}
                     autoComplete="off"
-                    className={`w-full px-4 py-2 border rounded-md ${
+                    className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                       fieldErrors.firstName ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -312,7 +329,7 @@ export default function SignUp() {
                     value={formData.lastName}
                     onChange={handleChange}
                     autoComplete="off"
-                    className={`w-full px-4 py-2 border rounded-md ${
+                    className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                       fieldErrors.lastName ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -331,7 +348,7 @@ export default function SignUp() {
                     value={formData.email}
                     onChange={handleChange}
                     autoComplete="off"
-                    className={`w-full px-4 py-2 border rounded-md ${
+                    className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                       fieldErrors.email ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -351,7 +368,7 @@ export default function SignUp() {
                       value={formData.password}
                       onChange={handleChange}
                       autoComplete="off"
-                      className={`w-full px-4 py-2 border rounded-md ${
+                      className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                         fieldErrors.password ? "border-red-500" : "border-gray-300"
                       }`}
                     />
@@ -379,7 +396,7 @@ export default function SignUp() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       autoComplete="off"
-                      className={`w-full px-4 py-2 border rounded-md ${
+                      className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                         fieldErrors.confirmPassword ? "border-red-500" : "border-gray-300"
                       }`}
                     />
@@ -435,7 +452,7 @@ export default function SignUp() {
                         value={formData.companyName}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md ${
+                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                           fieldErrors.companyName ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -446,14 +463,14 @@ export default function SignUp() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Registration Number/NTN <RequiredAsterisk />
+                        Registration Number/NTN (Optional)
                       </label>
                       <input
                         name="registrationNumber"
                         value={formData.registrationNumber}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md ${
+                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                           fieldErrors.registrationNumber ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -471,7 +488,7 @@ export default function SignUp() {
                         value={formData.contactNumber}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md ${
+                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                           fieldErrors.contactNumber ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -489,7 +506,8 @@ export default function SignUp() {
                         value={formData.companyAddress}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md ${
+                        rows="3"
+                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                           fieldErrors.companyAddress ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -507,7 +525,7 @@ export default function SignUp() {
                         value={formData.servicesOffered}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md ${
+                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                           fieldErrors.servicesOffered ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -525,7 +543,7 @@ export default function SignUp() {
                         value={formData.serviceLocations}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md ${
+                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                           fieldErrors.serviceLocations ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -544,7 +562,7 @@ export default function SignUp() {
                         onChange={handleChange}
                         autoComplete="off"
                         rows="3"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-black" // Added text-black
                       />
                     </div>
 
@@ -558,20 +576,20 @@ export default function SignUp() {
                         value={formData.website}
                         onChange={handleChange}
                         autoComplete="off"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-black" // Added text-black
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Certificate of Incorporation (PNG/JPG, ≤ 1MB) <RequiredAsterisk />
+                        Certificate of Incorporation (PNG/JPG, ≤ 1MB) (Optional)
                       </label>
                       <input
                         type="file"
                         accept="image/png,image/jpeg"
                         onChange={(e) => handleFileChange(e, 'certificate')}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md ${
+                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                           fieldErrors.certificateFile ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -592,7 +610,7 @@ export default function SignUp() {
                         accept="image/png,image/jpeg"
                         onChange={(e) => handleFileChange(e, 'profileImage')}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md ${
+                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
                           fieldErrors.profileImageFile ? "border-red-500" : "border-gray-300"
                         }`}
                       />
