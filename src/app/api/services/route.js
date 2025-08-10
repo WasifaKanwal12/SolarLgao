@@ -37,10 +37,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing required service fields.' }, { status: 400 });
     }
 
-    // Optional: Add validation for the Base64 image string if needed
-    // For example, checking if it starts with 'data:image/'
-    if (serviceData.imageUrl && !serviceData.imageUrl.startsWith('data:image/')) {
-        return NextResponse.json({ error: 'Invalid image format. Must be a Base64 image data URL.' }, { status: 400 });
+    // UPDATED VALIDATION: Check if imageUrl is an array and if all items are valid Base64 strings.
+    if (serviceData.imageUrl && (!Array.isArray(serviceData.imageUrl) || serviceData.imageUrl.some(url => typeof url !== 'string' || !url.startsWith('data:image/')))) {
+      return NextResponse.json({ error: 'Invalid image format. imageUrl must be an array of Base64 image data URLs.' }, { status: 400 });
     }
 
     const newServiceRef = await dbAdmin.collection('services').add({

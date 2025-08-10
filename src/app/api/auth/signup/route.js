@@ -37,40 +37,37 @@ export async function POST(request) {
       email,
       firstName,
       lastName,
-      role: userType, // Store userType as role
-      emailVerified: false, // Initial state, will be updated by email verification process
+      role: userType,
+      emailVerified: false,
       createdAt: new Date(),
       lastLoginAt: new Date(),
     };
 
-    // Set user data in the 'users' collection using their Firebase Auth UID as the document ID.
     await dbAdmin.collection('users').doc(uid).set(userData);
 
-    // If the user is a provider, create a separate document in the 'providers' collection.
+    
     if (userType === 'provider') {
       const providerData = {
-        uid, // Link to the user's UID
+        uid, 
         companyName,
-        registrationNumber: registrationNumber || null, // Ensure it's null if undefined or empty
+        registrationNumber: registrationNumber || null, 
         contactNumber,
         companyAddress,
-        servicesOffered: servicesOffered || [], // Ensure it's an array, even if empty
-        serviceLocations: serviceLocations || [], // Ensure it's an array, even if empty
-        description: description || null, // Ensure it's null if undefined
-        website: website || null, // Ensure it's null if undefined
-        certificateUrl: certificateBase64 || null, // Storing base64 string, now optional
-        profileImageUrl: profileImageBase64 || null, // Storing base64 string
-        status: 'pending', // Default status for new providers awaiting admin approval
-        rating: 0, // Initialize rating
-        totalReviews: 0, // Initialize review count
+        servicesOffered: servicesOffered || [], 
+        serviceLocations: serviceLocations || [], 
+        description: description || null,
+        website: website || null,
+        certificateUrl: certificateBase64 || null, 
+        profileImageUrl: profileImageBase64 || null,
+        status: 'pending', 
+        rating: 0, 
+        totalReviews: 0, 
       };
-      // Set provider data in the 'providers' collection using the same UID.
+      
       await dbAdmin.collection('providers').doc(uid).set(providerData);
     }
 
-    // Set custom claims for the user immediately after creating them.
-    // This makes the user's role available in their ID token for client-side checks
-    // and for Firebase Security Rules.
+   
     await authAdmin.setCustomUserClaims(uid, { role: userType });
 
     // Return a success response.

@@ -1,4 +1,3 @@
-// app/provider/services/page.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import { auth } from "@/lib/config";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 export default function ProviderServicesPage() {
   const [user, setUser] = useState(null);
@@ -78,6 +78,71 @@ export default function ProviderServicesPage() {
     );
   }
 
+  const ServiceCard = ({ service, onDelete }) => {
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    const nextImage = () => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % service.imageUrl.length);
+    };
+
+    const prevImage = () => {
+      setCurrentImageIndex((prevIndex) => (prevIndex - 1 + service.imageUrl.length) % service.imageUrl.length);
+    };
+
+    const hasMultipleImages = service.imageUrl && service.imageUrl.length > 1;
+
+    return (
+      <div className="bg-white rounded-lg shadow-md overflow-hidden relative">
+        <div className="relative w-full h-48">
+          <img
+            src={service.imageUrl[currentImageIndex] || "https://via.placeholder.com/400x250?text=Service+Image"}
+            alt={service.title}
+            className="w-full h-full object-cover"
+          />
+          {hasMultipleImages && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute top-1/2 left-2 -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute top-1/2 right-2 -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+              >
+                <ChevronRightIcon className="h-5 w-5" />
+              </button>
+            </>
+          )}
+        </div>
+        <div className="p-5">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">{service.title}</h2>
+          <p className="text-gray-600 text-sm mb-3 line-clamp-3">{service.description}</p>
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-lg font-bold text-green-700">
+              Pkr{service.priceMin} {service.priceMax ? `- Pkr${service.priceMax}` : ''}
+            </span>
+            <span className={`text-sm px-3 py-1 rounded-full ${service.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {service.status}
+            </span>
+          </div>
+          <div className="flex space-x-2">
+            <Link href={`/provider/services/${service.id}`} className="flex-1 text-center bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors">
+              Edit
+            </Link>
+            <button
+              onClick={() => onDelete(service.id)}
+              className="flex-1 text-center bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 p-6 md:p-8 bg-gray-100">
       <header className="flex justify-between items-center mb-8">
@@ -97,32 +162,7 @@ export default function ProviderServicesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service) => (
-            <div key={service.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <img src={service.imageUrl || "https://via.placeholder.com/400x250?text=Service+Image"} alt={service.title} className="w-full h-48 object-cover" />
-              <div className="p-5">
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">{service.title}</h2>
-                <p className="text-gray-600 text-sm mb-3 line-clamp-3">{service.description}</p>
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-lg font-bold text-green-700">
-                    Pkr{service.priceMin} {service.priceMax ? `- Pkr${service.priceMax}` : ''}
-                  </span>
-                  <span className={`text-sm px-3 py-1 rounded-full ${service.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {service.status}
-                  </span>
-                </div>
-                <div className="flex space-x-2">
-                  <Link href={`/provider/services/${service.id}`} className="flex-1 text-center bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors">
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => handleDeleteService(service.id)}
-                    className="flex-1 text-center bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ServiceCard key={service.id} service={service} onDelete={handleDeleteService} />
           ))}
         </div>
       )}

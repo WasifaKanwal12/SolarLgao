@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { auth } from "@/lib/config";
 import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function EditServicePage() {
-  const { serviceId } = useParams();
-  const router = useRouter();
+export default function EditServicePage({ params }) {
+  const { serviceId } = params;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -16,14 +15,15 @@ export default function EditServicePage() {
     description: "",
     priceMin: "",
     priceMax: "",
-    imageUrl: "", // This will store the Base64 string
     features: "",
     estimatedCompletionTime: "",
-    status: "",
+    status: "active",
+    imageUrl: [], // Holds existing image URLs
   });
-  const [imageFile, setImageFile] = useState(null); // New state for the image file
+  const [newImageFiles, setNewImageFiles] = useState([]); // Holds newly uploaded files
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -32,14 +32,37 @@ export default function EditServicePage() {
         return;
       }
       setUser(currentUser);
-      if (serviceId) {
-        await fetchServiceData(serviceId, currentUser.uid);
-      } else {
-        setLoading(false);
-      }
+      await fetchService(currentUser.uid, serviceId);
     });
     return () => unsubscribe();
-  }, [serviceId, router]);
+  }, [router, serviceId]);
+
+  const fetchService = async (providerId, id) => {
+    try {
+      const res = await fetch(`/api/services/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch service.");
+      const data = await res.json();
+      const service = data.service;
+      if (service.providerId !== providerId) {
+        throw new Error("You do not have permission to edit this service.");
+      }
+      setFormData({
+        title: service.title || "",
+        description: service.description || "",
+        priceMin: service.priceMin !== undefined ? service.priceMin.toString() : "",
+        priceMax: service.priceMax !== undefined ? service.priceMax.toString() : "",
+        features: service.features ? service.features.join(", ") : "",
+        estimatedCompletionTime: service.estimatedCompletionTime || "",
+        status: service.status || "active",
+        imageUrl: service.imageUrl || [], // Initialize with existing images
+      });
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching service:", err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -50,37 +73,6 @@ export default function EditServicePage() {
     });
   };
 
-  const fetchServiceData = async (id, currentUserId) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/services/${id}`);
-      if (!res.ok) throw new Error("Failed to fetch service data.");
-      const data = await res.json();
-
-      // Ensure the logged-in user is the owner of the service
-      if (data.service.providerId !== currentUserId) {
-        router.push("/unauthorized"); // Or a more specific error page
-        return;
-      }
-
-      setFormData({
-        title: data.service.title,
-        description: data.service.description,
-        priceMin: data.service.priceMin || "",
-        priceMax: data.service.priceMax || "",
-        imageUrl: data.service.imageUrl || "", // Set the existing Base64 string
-        features: Array.isArray(data.service.features) ? data.service.features.join(", ") : "",
-        estimatedCompletionTime: data.service.estimatedCompletionTime || "",
-        status: data.service.status || "active",
-      });
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching service data:", err);
-      setError("Failed to load service data. " + err.message);
-      setLoading(false);
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -89,40 +81,49 @@ export default function EditServicePage() {
     }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-    }
+  const handleNewImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setNewImageFiles((prevFiles) => [...prevFiles, ...files]);
+  };
+
+  const handleRemoveExistingImage = (indexToRemove) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      imageUrl: prevData.imageUrl.filter((_, index) => index !== indexToRemove),
+    }));
+  };
+
+  const handleRemoveNewImage = (indexToRemove) => {
+    setNewImageFiles((prevFiles) => prevFiles.filter((_, index) => index !== indexToRemove));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
-      alert("You must be logged in.");
+      alert("You must be logged in to update a service.");
       return;
     }
 
     setIsSubmitting(true);
     setError(null);
 
-    let base64Image = formData.imageUrl; // Start with the existing image URL
-    if (imageFile) {
+    let base64NewImages = [];
+    if (newImageFiles.length > 0) {
       try {
-        base64Image = await convertToBase64(imageFile);
+        base64NewImages = await Promise.all(newImageFiles.map(file => convertToBase64(file)));
       } catch (err) {
-        setError("Failed to convert image to Base64.");
+        setError("Failed to convert new images to Base64.");
         setIsSubmitting(false);
         return;
       }
     }
 
-    const serviceData = {
+    const updatedServiceData = {
       ...formData,
       priceMin: parseFloat(formData.priceMin),
       priceMax: formData.priceMax ? parseFloat(formData.priceMax) : null,
       features: formData.features.split(",").map((f) => f.trim()).filter((f) => f),
-      imageUrl: base64Image, // Use the (potentially new) Base64 string here
+      imageUrl: [...formData.imageUrl, ...base64NewImages], // Combine old and new images
       updatedAt: new Date(),
     };
 
@@ -132,7 +133,7 @@ export default function EditServicePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(serviceData),
+        body: JSON.stringify(updatedServiceData),
       });
 
       if (!res.ok) {
@@ -159,14 +160,7 @@ export default function EditServicePage() {
   }
 
   if (error) {
-    return (
-      <div className="p-8 text-center text-red-600">
-        <p>{error}</p>
-        <button onClick={() => router.push("/provider/services")} className="btn-primary mt-4">
-          Go to Services List
-        </button>
-      </div>
-    );
+    return <div className="p-8 text-center text-red-600">{error}</div>;
   }
 
   return (
@@ -181,6 +175,7 @@ export default function EditServicePage() {
       <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
         {error && <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-md">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* ... (form fields like title, description, price, etc. remain the same) */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">Service Title</label>
             <input
@@ -234,33 +229,66 @@ export default function EditServicePage() {
               />
             </div>
           </div>
+
+          {/* New Image Handling Section */}
           <div>
-            <label htmlFor="imageUpload" className="block text-sm font-medium text-gray-700">Upload New Image (Optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Current Images</label>
+            {formData.imageUrl && formData.imageUrl.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {formData.imageUrl.map((imageUrl, index) => (
+                  <div key={index} className="relative w-24 h-24">
+                    <img
+                      src={imageUrl}
+                      alt={`Service Image ${index + 1}`}
+                      className="w-full h-full object-cover rounded-md border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExistingImage(index)}
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs -mt-1 -mr-1"
+                    >
+                      &#x2715;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No images currently saved.</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="imageUpload" className="block text-sm font-medium text-gray-700 mt-4">Add New Images</label>
             <input
               type="file"
               id="imageUpload"
               name="imageUpload"
               accept="image/*"
-              onChange={handleImageChange}
+              multiple
+              onChange={handleNewImageChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            {imageFile && (
-              <p className="mt-2 text-sm text-gray-600">Selected file: {imageFile.name}</p>
-            )}
-            {/* Display the current image if available */}
-            {formData.imageUrl && !imageFile && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-700 mb-2">Current Image:</p>
-                <img src={formData.imageUrl} alt="Service Image" className="max-h-48 object-contain" />
-              </div>
-            )}
-             {imageFile && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-700 mb-2">New Image Preview:</p>
-                <img src={URL.createObjectURL(imageFile)} alt="New Service Preview" className="max-h-48 object-contain" />
+            {newImageFiles.length > 0 && (
+              <div className="mt-2 text-sm text-gray-600">
+                <p className="font-medium">New files to be added:</p>
+                <ul className="list-disc list-inside">
+                  {newImageFiles.map((file, index) => (
+                    <li key={index} className="flex justify-between items-center">
+                      <span>{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveNewImage(index)}
+                        className="text-red-500 hover:text-red-700 ml-2"
+                      >
+                        &#x2715;
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
+          {/* ... (remaining form fields) */}
           <div>
             <label htmlFor="features" className="block text-sm font-medium text-gray-700">Features (comma-separated)</label>
             <input

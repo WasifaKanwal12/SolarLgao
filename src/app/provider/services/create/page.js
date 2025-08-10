@@ -14,12 +14,12 @@ export default function CreateServicePage() {
     description: "",
     priceMin: "",
     priceMax: "",
-    imageUrl: "", // This will now store the Base64 string
+    imageUrl: [], // Changed to an array for multiple images
     features: "",
     estimatedCompletionTime: "",
     status: "active",
   });
-  const [imageFile, setImageFile] = useState(null); // New state for the image file
+  const [imageFiles, setImageFiles] = useState([]); // State to hold multiple file objects
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const router = useRouter();
@@ -53,11 +53,15 @@ export default function CreateServicePage() {
     }));
   };
 
+  // CORRECTED: This function now appends new files instead of replacing them
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-    }
+    const files = Array.from(e.target.files);
+    setImageFiles((prevFiles) => [...prevFiles, ...files]);
+  };
+
+  // Function to remove a selected image
+  const handleRemoveImage = (indexToRemove) => {
+    setImageFiles((prevFiles) => prevFiles.filter((_, index) => index !== indexToRemove));
   };
 
   const handleSubmit = async (e) => {
@@ -70,12 +74,12 @@ export default function CreateServicePage() {
     setIsSubmitting(true);
     setError(null);
 
-    let base64Image = "";
-    if (imageFile) {
+    let base64Images = [];
+    if (imageFiles.length > 0) {
       try {
-        base64Image = await convertToBase64(imageFile);
+        base64Images = await Promise.all(imageFiles.map(file => convertToBase64(file)));
       } catch (err) {
-        setError("Failed to convert image to Base64.");
+        setError("Failed to convert one or more images to Base64.");
         setIsSubmitting(false);
         return;
       }
@@ -87,7 +91,7 @@ export default function CreateServicePage() {
       priceMin: parseFloat(formData.priceMin),
       priceMax: formData.priceMax ? parseFloat(formData.priceMax) : null,
       features: formData.features.split(",").map((f) => f.trim()).filter((f) => f),
-      imageUrl: base64Image, // Use the Base64 string here
+      imageUrl: base64Images, // Now an array of Base64 strings
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -190,21 +194,34 @@ export default function CreateServicePage() {
             </div>
           </div>
           <div>
-            <label htmlFor="imageUpload" className="block text-sm font-medium text-gray-700">Upload Image</label>
+            <label htmlFor="imageUpload" className="block text-sm font-medium text-gray-700">Upload Images</label>
             <input
               type="file"
               id="imageUpload"
               name="imageUpload"
               accept="image/*"
               onChange={handleImageChange}
+              multiple // Added the 'multiple' attribute here
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            {imageFile && (
-              <p className="mt-2 text-sm text-gray-600">Selected file: {imageFile.name}</p>
-            )}
-             {/* Optional: Display a preview of the image if it's already a base64 string or an object URL from file */}
-            {formData.imageUrl && !imageFile && (
-              <img src={formData.imageUrl} alt="Service Preview" className="mt-4 max-h-48 object-contain" />
+            {imageFiles.length > 0 && (
+              <div className="mt-2 text-sm text-gray-600">
+                <p className="font-medium">Selected files:</p>
+                <ul className="list-disc list-inside">
+                  {imageFiles.map((file, index) => (
+                    <li key={index} className="flex justify-between items-center">
+                      <span>{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="text-red-500 hover:text-red-700 ml-2"
+                      >
+                        &#x2715;
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
           <div>

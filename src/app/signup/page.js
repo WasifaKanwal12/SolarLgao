@@ -26,11 +26,11 @@ export default function SignUp() {
     companyAddress: "",
     servicesOffered: "",
     serviceLocations: "",
-    description: "", // Added description field
-    website: "", // Added website field
+    description: "",
+    website: "",
   });
   const [certificateFile, setCertificateFile] = useState(null);
-  const [profileImageFile, setProfileImageFile] = useState(null); // New for profile image
+  const [profileImageFile, setProfileImageFile] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -94,7 +94,6 @@ export default function SignUp() {
           message = "This company detail is required.";
         }
         break;
-      // registrationNumber and certificateFile are no longer required for validation here
       default:
         break;
     }
@@ -128,12 +127,11 @@ export default function SignUp() {
         if (fileType === 'profileImage') setProfileImageFile(file);
       }
     } else {
-      // If no file is selected, clear the file and any previous error for that file type
       if (fileType === 'certificate') setCertificateFile(null);
       if (fileType === 'profileImage') setProfileImageFile(null);
     }
     setFieldErrors((prev) => ({ ...prev, [`${fileType}File`]: fileErrorMessage }));
-    setError(fileErrorMessage); // General error for file
+    setError(fileErrorMessage);
   };
 
   const validateAllFields = (data) => {
@@ -171,14 +169,11 @@ export default function SignUp() {
 
     if (data.userType === "provider") {
       if (data.companyName.trim() === "") errors.companyName = "Company Name is required.";
-      // registrationNumber is now optional, no validation here
       if (data.contactNumber.trim() === "") errors.contactNumber = "Contact Number is required.";
       if (data.companyAddress.trim() === "") errors.companyAddress = "Company Address is required.";
       if (data.servicesOffered.trim() === "") errors.servicesOffered = "Services Offered are required.";
       if (data.serviceLocations.trim() === "") errors.serviceLocations = "Service Locations are required.";
-      // certificateFile is now optional, no validation here for it being present
 
-      // If a certificate file is provided but has an error (e.g., wrong type/size), keep that error
       if (certificateFile && fieldErrors.certificateFile) {
         errors.certificateFile = fieldErrors.certificateFile;
       }
@@ -199,14 +194,12 @@ export default function SignUp() {
     const currentErrors = validateAllFields(formData);
     if (Object.keys(currentErrors).length > 0) {
       setFieldErrors(currentErrors);
-      // Only set a general error message if there are actual validation errors, not just optional file warnings
       const hasRequiredFieldErrors = Object.keys(currentErrors).some(key =>
         !(key === 'certificateFile' || key === 'profileImageFile' || key === 'registrationNumber')
       );
       if (hasRequiredFieldErrors) {
         setError("Please correct the highlighted fields and fill all required information.");
       } else if (currentErrors.certificateFile || currentErrors.profileImageFile) {
-        // If only file errors, display a specific message
         setError("Please correct file upload issues (e.g., file type or size).");
       }
       setLoading(false);
@@ -243,15 +236,17 @@ export default function SignUp() {
           lastName: formData.lastName,
           userType: formData.userType,
           companyName: formData.userType === "provider" ? formData.companyName : undefined,
-          registrationNumber: formData.userType === "provider" ? formData.registrationNumber : undefined, // Now optional
+          registrationNumber: formData.userType === "provider" ? formData.registrationNumber : undefined,
           contactNumber: formData.userType === "provider" ? formData.contactNumber : undefined,
           companyAddress: formData.userType === "provider" ? formData.companyAddress : undefined,
           servicesOffered: formData.userType === "provider" ? formData.servicesOffered.split(',').map(s => s.trim()) : undefined,
           serviceLocations: formData.userType === "provider" ? formData.serviceLocations.split(',').map(l => l.trim()) : undefined,
-          description: formData.userType === "provider" ? formData.description : undefined, // Include description
-          website: formData.userType === "provider" ? formData.website : undefined, // Include website
-          certificateBase64: formData.userType === "provider" ? certificateBase64 : undefined, // Now optional
-          profileImageBase64: formData.userType === "provider" ? profileImageBase64 : undefined, // Include profile image base64
+          description: formData.userType === "provider" ? formData.description : undefined,
+          website: formData.userType === "provider" ? formData.website : undefined,
+          certificateBase64: formData.userType === "provider" ? certificateBase64 : undefined,
+          profileImageBase64: formData.userType === "provider" ? profileImageBase64 : undefined,
+          // New: Set initial status for providers
+          status: formData.userType === "provider" ? "pending" : "approved",
         }),
       });
       const data = await response.json();
@@ -261,8 +256,14 @@ export default function SignUp() {
         throw new Error(data.error || "Failed to create account.");
       }
 
-      setSuccessMessage(data.message || "Account created successfully! Please check your email for verification.");
-      setRedirectUrl(data.redirectUrl || "/verify-email");
+      // Check the user type to determine the redirection URL and message
+      if (formData.userType === "provider") {
+        setSuccessMessage("Account created successfully! Your account is pending admin approval.");
+        setRedirectUrl("/pending-approval");
+      } else {
+        setSuccessMessage(data.message || "Account created successfully! Please check your email for verification.");
+        setRedirectUrl(data.redirectUrl || "/verify-email");
+      }
       setSuccess(true);
     } catch (error) {
       console.error("Signup error:", error);
@@ -311,7 +312,7 @@ export default function SignUp() {
                     value={formData.firstName}
                     onChange={handleChange}
                     autoComplete="off"
-                    className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                    className={`w-full px-4 py-2 border rounded-md text-black ${
                       fieldErrors.firstName ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -329,7 +330,7 @@ export default function SignUp() {
                     value={formData.lastName}
                     onChange={handleChange}
                     autoComplete="off"
-                    className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                    className={`w-full px-4 py-2 border rounded-md text-black ${
                       fieldErrors.lastName ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -348,7 +349,7 @@ export default function SignUp() {
                     value={formData.email}
                     onChange={handleChange}
                     autoComplete="off"
-                    className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                    className={`w-full px-4 py-2 border rounded-md text-black ${
                       fieldErrors.email ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -368,7 +369,7 @@ export default function SignUp() {
                       value={formData.password}
                       onChange={handleChange}
                       autoComplete="off"
-                      className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                      className={`w-full px-4 py-2 border rounded-md text-black ${
                         fieldErrors.password ? "border-red-500" : "border-gray-300"
                       }`}
                     />
@@ -396,7 +397,7 @@ export default function SignUp() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       autoComplete="off"
-                      className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                      className={`w-full px-4 py-2 border rounded-md text-black ${
                         fieldErrors.confirmPassword ? "border-red-500" : "border-gray-300"
                       }`}
                     />
@@ -452,7 +453,7 @@ export default function SignUp() {
                         value={formData.companyName}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                        className={`w-full px-4 py-2 border rounded-md text-black ${
                           fieldErrors.companyName ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -470,7 +471,7 @@ export default function SignUp() {
                         value={formData.registrationNumber}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                        className={`w-full px-4 py-2 border rounded-md text-black ${
                           fieldErrors.registrationNumber ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -488,7 +489,7 @@ export default function SignUp() {
                         value={formData.contactNumber}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                        className={`w-full px-4 py-2 border rounded-md text-black ${
                           fieldErrors.contactNumber ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -507,7 +508,7 @@ export default function SignUp() {
                         onChange={handleChange}
                         autoComplete="off"
                         rows="3"
-                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                        className={`w-full px-4 py-2 border rounded-md text-black ${
                           fieldErrors.companyAddress ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -525,7 +526,7 @@ export default function SignUp() {
                         value={formData.servicesOffered}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                        className={`w-full px-4 py-2 border rounded-md text-black ${
                           fieldErrors.servicesOffered ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -543,7 +544,7 @@ export default function SignUp() {
                         value={formData.serviceLocations}
                         onChange={handleChange}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                        className={`w-full px-4 py-2 border rounded-md text-black ${
                           fieldErrors.serviceLocations ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -562,7 +563,7 @@ export default function SignUp() {
                         onChange={handleChange}
                         autoComplete="off"
                         rows="3"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-black" // Added text-black
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-black"
                       />
                     </div>
 
@@ -576,7 +577,7 @@ export default function SignUp() {
                         value={formData.website}
                         onChange={handleChange}
                         autoComplete="off"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-black" // Added text-black
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-black"
                       />
                     </div>
 
@@ -589,7 +590,7 @@ export default function SignUp() {
                         accept="image/png,image/jpeg"
                         onChange={(e) => handleFileChange(e, 'certificate')}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                        className={`w-full px-4 py-2 border rounded-md text-black ${
                           fieldErrors.certificateFile ? "border-red-500" : "border-gray-300"
                         }`}
                       />
@@ -610,7 +611,7 @@ export default function SignUp() {
                         accept="image/png,image/jpeg"
                         onChange={(e) => handleFileChange(e, 'profileImage')}
                         autoComplete="off"
-                        className={`w-full px-4 py-2 border rounded-md text-black ${ // Added text-black
+                        className={`w-full px-4 py-2 border rounded-md text-black ${
                           fieldErrors.profileImageFile ? "border-red-500" : "border-gray-300"
                         }`}
                       />

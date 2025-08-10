@@ -69,9 +69,7 @@ export async function middleware(request) {
         userRole = firestoreRole; // Update userRole for current check
         await adminAuth.setCustomUserClaims(uid, { role: userRole });
         console.log(`Updated custom claims for user ${uid} to role: ${userRole}`);
-        // Note: The new claims will be in the *next* ID token/session cookie.
-        // For the *current* request, `decodedClaims.role` might still be old if it was just updated.
-        // But `userRole` variable here now holds the correct role from Firestore.
+        
       } else {
         userRole = firestoreRole; // Ensure userRole is set even if claims didn't change but needed refresh
       }
@@ -126,17 +124,7 @@ export async function middleware(request) {
 // Config to specify which paths the middleware should run on
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes, explicitly allowed above)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico
-     * - Any other public static assets (e.g., .svg, .png, etc.)
-     *
-     * IMPORTANT: Make sure your PUBLIC_PATHS array covers all your actual public routes.
-     * The matcher here is designed to intercept *everything else*.
-     */
+    
     '/((?!api|signin|signup|signout|pendingVerification|pending-approval|_next/static|_next/image|favicon.ico|google-logo.svg|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.css$|.*\\.js$).*)',
   ],
 };
