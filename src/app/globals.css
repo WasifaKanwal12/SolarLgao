@@ -40,3 +40,9 @@ body {
   }
 }
 
+.article-content a,
+.article-content button {
+  @apply inline-flex items-center justify-center px-6 py-3 
+         bg-green-600 text-white font-medium rounded-lg 
+         hover:bg-green-700 transition-colors no-underline;
+}

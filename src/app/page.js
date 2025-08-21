@@ -1,10 +1,126 @@
-import Image from "next/image"
-import Link from "next/link"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
-import TestimonialCard from "@/components/TestimonialCard"
-import ServiceCard from "@/components/ServiceCard"
-import Chatbot from "@/components/chatbot"
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import TestimonialCard from "@/components/TestimonialCard";
+import ServiceCard from "@/components/ServiceCard";
+import Chatbot from "@/components/chatbot";
+import { CalendarDays, Clock, User, ArrowRight } from "lucide-react";
+
+// Date formatting utility function
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
+// Reverted to your original articles data
+const articles = [
+  {
+    id: 1,
+    title: "How to Install a Solar System in Your Home in Pakistan",
+    excerpt: "A comprehensive step-by-step guide to installing solar panels in Pakistan, including costs, system types, and professional installation services.",
+    author: "Solar Lgao Team",
+    date: "2025-04-15",
+    readTime: "8 min read",
+    category: "Solar Energy",
+    featured: true,
+    image: "/art1.jpg?height=600&width=300",
+  },
+  {
+    id: 2,
+    title: "How to Determine the Size and Cost of Your Solar System in Pakistan: The Complete Guide",
+    excerpt: "Learn how to size your solar system and estimate costs in Pakistan: step-by-step calculations, 2025 panel and inverter prices, and a real 3.5 kW example.",
+    author: "Solar Lgao Team",
+    date: "2025-04-16",
+    readTime: "9 min read",
+    category: "Solar Energy",
+    featured: false,
+    image: "/art2.jpg?height=600&width=300",
+  },
+  {
+    id: 3,
+    title: "Getting the Best out of your Solar System: Ways to make it as benefit-taking as possible with regard to longevity.",
+    excerpt: "Practical maintenance tips to maximize your solar system's efficiency and lifespan in Pakistan—cleaning, inspections, inverter care, shading prevention, battery upkeep, and monitoring.",
+    author: "Solar Lgao Team",
+    date: "2025-04-17",
+    readTime: "7 min read",
+    category: "Solar Energy",
+    featured: false,
+    image: "/art3.jpg?height=600&width=300",
+  },
+];
+
+const featuredArticle = articles.find((article) => article.featured);
+
+// Reusable Article Card Component with new styling
+const ArticleCard = ({ article }) => {
+  return (
+    <article className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="relative">
+        <Image
+          src={article.image}
+          alt={article.title}
+          width={800}
+          height={400}
+          className="w-full h-40 object-cover"
+        />
+        <div className="absolute top-2 right-2 flex items-center space-x-2">
+          {/* Tags are removed as per your request */}
+          <div className="bg-white p-2 rounded-full shadow-md text-gray-800">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-file-text"
+            >
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+              <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+              <path d="M10 9H8" />
+              <path d="M16 13H8" />
+              <path d="M16 17H8" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div className="p-4 space-y-2">
+        <p className="text-sm text-gray-400 uppercase tracking-widest">{article.category}</p>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">{article.title}</h3>
+        <p className="text-gray-600 dark:text-gray-400 text-sm">{article.excerpt}</p>
+        
+        {/* Combined Author and Date into a single row */}
+        <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+          <div className="flex items-center space-x-1">
+            <User className="h-4 w-4" />
+            <span>{article.author}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <CalendarDays className="h-4 w-4" />
+            <span>{formatDate(article.date)}</span>
+          </div>
+        </div>
+        
+        <Link
+          href={`/articles/${article.id}`}
+          className="w-full mt-4 py-2 px-4 rounded-full font-bold text-sm transition-colors duration-300 text-center block bg-primary-green hover:bg-green-700"
+          style={{ color: "white" }}
+        >
+          Read Full Article
+        </Link>
+      </div>
+    </article>
+  );
+};
 
 export default function Home() {
   // Sample testimonials data
@@ -18,19 +134,19 @@ export default function Home() {
     },
     {
       rating: 5,
-      text: "As a business owner, I was looking for ways to reduce our carbon footprint and energy costs. Solar Lgao provided excellent service and guidance.",
-      image: "/user2.jpg??height=100&width=100",
-      name: "Muhammad Ali",
-      organization: "Green Tech Solutions",
+      text: "I've seen a significant drop in my electricity bills since installing solar panels with Solar Lgao. Highly recommended!",
+      image: "/user2.jpg?height=100&width=100",
+      name: "Fatima Khan",
+      organization: "Business Owner",
     },
     {
       rating: 4,
-      text: "The personalized recommendations were spot on. I've been saving significantly on my electricity bills since installing solar panels.",
-      image: "/user3.jpg??height=100&width=100",
-      name: "Tabish Khan",
-      organization: "Local Restaurant",
+      text: "The team was professional and the process was very transparent. The after-sales support is great too.",
+      image: "/user3.jpg?height=100&width=100",
+      name: "Usman Ahmed",
+      organization: "Homeowner",
     },
-  ]
+  ];
 
   // Services data
   const services = [
@@ -95,22 +211,20 @@ export default function Home() {
       title: "Quality Assurance",
       description: "High-quality solar products with warranties and performance guarantees.",
     },
-  ]
+  ];
+
+  const otherArticles = articles.filter((article) => !article.featured);
 
   return (
     <>
-    
       <Header />
 
       {/* Hero Section */}
       <section className="relative h-[600px]">
-        {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image src="/homesection2.jpeg" alt="Solar Panel Background" fill style={{ objectFit: "cover" }} priority />
           <div className="absolute inset-0 bg-black bg-opacity-50"></div>
         </div>
-
-        {/* Content */}
         <div className="container-custom relative z-10 h-full flex items-center">
           <div className="max-w-lg text-white">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Solar Energy Solutions</h1>
@@ -118,22 +232,20 @@ export default function Home() {
               Harness the power of the sun with our innovative solar solutions. Reduce your carbon footprint and save on
               energy costs.
             </p>
-            <div className="flex gap-4"> 
-      <Link href="/signup" className="btn-primary">
-        Join Us
-      </Link>
-      <Link href="/recommendation" className="btn-primary">
-        Get Recommendation
-      </Link>
-      
-      
-    </div>
+            <div className="flex gap-4">
+              <Link href="/signup" className="btn-primary">
+                Join Us
+              </Link>
+              <Link href="/recommendation" className="btn-primary">
+                Get Recommendation
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* About Sections */}
-      <section id="about" className="py-16 bg-gray-100">
+      {/* About Section */}
+      <section id="about" className="py-16 bg-white dark:bg-slate-900 text-gray-900 dark:text-white">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="relative h-[400px] rounded-lg overflow-hidden">
@@ -145,45 +257,41 @@ export default function Home() {
                 className="rounded-lg"
               />
             </div>
-
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Embrace renewable energy to
                 <br />
                 nurture a greener planet
               </h2>
-              <p className="text-gray-600 mb-8">
+              <p className="text-gray-600 dark:text-gray-400 mb-8">
                 At Solar Lgao, we're committed to making solar energy accessible to everyone. Our mission is to
                 accelerate the transition to sustainable energy through innovative solutions and exceptional service. We
                 connect you with verified providers who offer high-quality solar installations tailored to your specific
                 needs.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-y-8 md:gap-4 text-center">
-                 <div>
-                <p className="text-3xl font-bold text-primary-green">8000KW+</p>
-               <p className="text-gray-600">Energy Saved</p>
-               </div>
-                  <div>
-                    <p className="text-3xl font-bold text-primary-green">10K+</p>
-               <p className="text-gray-600">Global Clients</p>
-                 </div>
-             <div>
-               <p className="text-3xl font-bold text-primary-green">98%</p>
-                <p className="text-gray-600">Client Satisfaction</p>
-             </div>
-           </div>
-
-            
+                <div>
+                  <p className="text-3xl font-bold text-primary-green">8000KW+</p>
+                  <p className="text-gray-600 dark:text-gray-400">Energy Saved</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-primary-green">10K+</p>
+                  <p className="text-gray-600 dark:text-gray-400">Global Clients</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-primary-green">98%</p>
+                  <p className="text-gray-600 dark:text-gray-400">Client Satisfaction</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-16">
+      <section id="services" className="py-16 bg-white dark:bg-slate-900 text-gray-900 dark:text-white">
         <div className="container-custom">
           <h2 className="section-title">Our Services</h2>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
             {services.map((service, index) => (
               <ServiceCard key={index} icon={service.icon} title={service.title} description={service.description} />
@@ -192,15 +300,100 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Articles Section Main Header */}
+      <section className="text-center py-16 bg-white dark:bg-slate-900 text-gray-900 dark:text-white">
+        <h1 className="font-serif text-4xl md:text-6xl font-bold mb-6">
+          <span className="text-primary-green block">Articles</span>
+        </h1>
+        <p className="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-8">
+          Expert guides, tips, and insights on solar energy installation and maintenance in Pakistan. Make informed
+          decisions about your solar journey.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="#featured"
+            className="inline-flex items-center justify-center px-6 py-3 bg-primary-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Start Reading
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </a>
+          <a
+            href="#articles"
+            className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            Browse All Articles
+          </a>
+        </div>
+      </section>
+
+      {/* Featured Articles Section */}
+      <section id="featured" className="mb-16 bg-white dark:bg-slate-900 text-gray-900 dark:text-white container-custom">
+        <div className="mb-8 text-center">
+          <h2 className="font-serif text-3xl font-bold mb-2">Featured Article</h2>
+          <p className="text-muted-foreground text-gray-500 dark:text-gray-400">Our top pick for this week</p>
+        </div>
+        {featuredArticle && (
+          <article className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row">
+            <div className="relative w-full h-64 md:h-auto md:w-1/2">
+              <Image
+                src={featuredArticle.image}
+                alt={featuredArticle.title}
+                fill
+                style={{ objectFit: "cover" }}
+                className="rounded-l-xl"
+              />
+            </div>
+            <div className="p-8 md:w-1/2 flex flex-col justify-center">
+              <div className="inline-block px-3 py-1 bg-primary-green/10 text-primary-green text-sm font-medium rounded-full mb-4">
+                {featuredArticle.category}
+              </div>
+              <h3 className="font-serif text-2xl font-bold text-foreground mb-4">{featuredArticle.title}</h3>
+              <p className="text-muted-foreground mb-6 text-gray-600 dark:text-gray-400">{featuredArticle.excerpt}</p>
+              <div className="flex items-center justify-center md:justify-start space-x-4 text-sm text-muted-foreground mb-6">
+                <div className="flex items-center space-x-1">
+                  <User className="h-4 w-4" />
+                  <span>{featuredArticle.author}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <CalendarDays className="h-4 w-4" />
+                  <span>{formatDate(featuredArticle.date)}</span>
+                </div>
+              </div>
+              <Link
+                href={`/articles/${featuredArticle.id}`}
+                className="btn-primary inline-flex items-center justify-center"
+              >
+                Read Full Article
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
+          </article>
+        )}
+      </section>
+
+      {/* All Articles Section */}
+      <section id="articles" className="mb-16 bg-white dark:bg-slate-900 text-gray-900 dark:text-white container-custom">
+        <div className="mb-8 text-center">
+          <h2 className="font-serif text-3xl font-bold mb-2">All Articles</h2>
+          <p className="text-muted-foreground text-gray-500 dark:text-gray-400">
+            Explore our complete collection of solar energy guides
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {otherArticles.map((article) => (
+            <ArticleCard key={article.id} article={article} />
+          ))}
+        </div>
+      </section>
+
       {/* Clients Section */}
-      <section id="clients" className="py-16 bg-gray-50">
+      <section id="clients" className="py-16 bg-gray-50 dark:bg-slate-800">
         <div className="container-custom">
-          <h2 className="section-title text-black">Words of Our Clients</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+          <h2 className="section-title text-gray-900 dark:text-white">Words of Our Clients</h2>
+          <p className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
             See what our customers say about our company & the product
           </p>
-
-          <div className="grid grid-cols-1 text-black md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 text-gray-900 dark:text-white md:grid-cols-2 lg:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <TestimonialCard
                 key={index}
@@ -216,12 +409,11 @@ export default function Home() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-16">
+      <section id="contact" className="py-16 bg-white dark:bg-slate-900 text-gray-900 dark:text-white">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div>
               <h2 className="text-3xl font-bold mb-6">Get In Touch</h2>
-
               <div className="mb-6">
                 <p className="flex items-center mb-2">
                   <svg
@@ -256,7 +448,6 @@ export default function Home() {
                   solarlgao@gmail.com
                 </p>
               </div>
-
               <div className="mb-6">
                 <h3 className="text-xl font-semibold mb-4">Follow Us</h3>
                 <div className="flex space-x-4">
@@ -350,7 +541,6 @@ export default function Home() {
                     required
                   ></textarea>
                 </div>
-
                 <button type="submit" className="btn-primary w-full">
                   Send Message
                 </button>
@@ -359,9 +549,9 @@ export default function Home() {
           </div>
         </div>
       </section>
-       <Chatbot/>
+
+      <Chatbot />
       <Footer />
     </>
-  )
+  );
 }
-

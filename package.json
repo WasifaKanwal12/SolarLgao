@@ -21,6 +21,7 @@
     "framer-motion": "^12.10.5",
     "googleapis": "^148.0.0",
     "lottie-react": "^2.4.1",
+    "lucide-react": "^0.540.0",
     "marked": "^15.0.11",
     "next": "^14.1.0",
     "next-auth": "^4.24.11",
