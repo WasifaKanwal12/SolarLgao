@@ -136,7 +136,7 @@ export default function Home() {
       rating: 5,
       text: "I've seen a significant drop in my electricity bills since installing solar panels with Solar Lgao. Highly recommended!",
       image: "/user2.jpg?height=100&width=100",
-      name: "Fatima Khan",
+      name: "Haseeb Khan",
       organization: "Business Owner",
     },
     {
